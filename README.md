@@ -4,7 +4,7 @@ Metas Financeiras
 <Vai Dar Bom><html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX++++</title>
+<title>Meta Financeira PRO MAX FINAL</title>
 <style>
 body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; }
@@ -16,7 +16,7 @@ input { padding:8px; margin:5px; border-radius:8px; border:none; }
 .alert { margin-top:10px; font-weight:bold; }
 </style>
 </head>
-<body><h1>📊 Metas Financeiras PRO MAX++++</h1><div id="home" class="card">
+<body><h1>📊 Metas Financeiras PRO MAX FINAL</h1><div id="home" class="card">
   <h3>Suas Metas</h3>
   <div id="listaMetas"></div>  <h4>Criar Nova Meta</h4>
   Nome: <input id="nomeMeta">
@@ -33,7 +33,7 @@ input { padding:8px; margin:5px; border-radius:8px; border:none; }
 <h3>✏️ Editar Meta</h3>
 Valor: <input id="editarValor" type="number">
 Dias: <input id="editarDias" type="number">
-<button class="blue" onclick="salvarEdicaoMeta()">Salvar Alterações</button>
+<button class="blue" onclick="salvarEdicaoMeta()">Salvar</button>
 
 <p id="diaAtual"></p>
 <p id="diasRestantes"></p>
@@ -41,6 +41,8 @@ Dias: <input id="editarDias" type="number">
 <p id="valorAtual"></p>
 <p id="restante"></p>
 <p id="diaria"></p>
+<p id="proximoDia"></p>
+<p id="dizimoInfo"></p>
 <p id="percentual"></p>
 
 <input id="ganhoInput" type="number">
@@ -119,7 +121,8 @@ function atualizar(){
   let dia = m.historico.length;
   let restante = m.meta - ganho;
   let diasRest = m.diasTotal - dia;
-  let diaria = restante / (diasRest || 1);
+  let diariaLiquida = restante / (diasRest || 1);
+  let diariaBruta = diariaLiquida / 0.9;
   let progresso = (ganho/m.meta)*100;
   let deveria = (m.meta/m.diasTotal)*dia;
 
@@ -129,14 +132,20 @@ function atualizar(){
   valorDevia.innerText = `📌 Deveria ter: R$ ${deveria.toFixed(2)}`;
   valorAtual.innerText = `💰 Você tem: R$ ${ganho.toFixed(2)}`;
   restante.innerText = `❗ Falta: R$ ${restante.toFixed(2)}`;
-  diaria.innerText = `Meta diária: R$ ${diaria.toFixed(2)}`;
+  diaria.innerText = `Meta diária (líquido): R$ ${diariaLiquida.toFixed(2)}`;
+
+  proximoDia.innerText = `👉 Próximo dia você precisa fazer: R$ ${diariaBruta.toFixed(2)}`;
+
+  let dizimo = diariaBruta * 0.10;
+  dizimoInfo.innerText = `🙏 Dízimo do dia: R$ ${dizimo.toFixed(2)} (10%)`;
+
   percentual.innerText = `Progresso: ${progresso.toFixed(1)}%`;
 
   alerta.innerText = ganho < deveria ? '⚠️ Abaixo do esperado' : '🔥 No ritmo';
 
   renderHistorico();
   renderDespesas();
-  renderDistribuicaoDia(diaria);
+  renderDistribuicaoDia(diariaLiquida);
 }
 
 function registrar(){
