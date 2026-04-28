@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX - Inteligência de Quitação</title>
+<title>Meta Financeira PRO MAX - Prioridade Inteligente</title>
 <style>
 body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.5; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; }
@@ -14,7 +14,7 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
 .blue { background:#3b82f6; }
 .orange { background:#f97316; }
 .alert { margin-top:10px; font-weight:bold; padding: 10px; border-radius: 8px; }
-.despesa-item { border-bottom: 1px solid #334155; padding: 10px 0; }
+.despesa-item { border-bottom: 1px solid #334155; padding: 10px 0; transition: all 0.3s ease; }
 .manual-badge { background: #3b82f6; font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
 </style>
 </head>
@@ -62,11 +62,11 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
   </div>
 
   <div class="card">
-    <h3>📋 Contas e Distribuição</h3>
+    <h3>📋 Contas e Distribuição (Ordenado por Prioridade)</h3>
     
     <div style="margin-bottom:20px; background: #0f172a; padding: 10px; border-radius: 8px;">
         <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação (Menores Valores)</button>
-        <p style="margin: 5px 0 0 0;"><small>Foca 70% do ganho nas contas mais próximas de serem quitadas.</small></p>
+        <p style="margin: 5px 0 0 0;"><small>Reordena as contas: as que recebem mais hoje ficam no topo.</small></p>
     </div>
 
     <div style="margin-bottom:20px;">
@@ -181,7 +181,8 @@ function addDespesa(){
     nome: nomeDespesa.value,
     valor: Number(valorDespesa.value),
     porcentagem: 0,
-    manual: false
+    manual: false,
+    id: Date.now() // ID único para manter referência após sorteio
   });
   nomeDespesa.value = ''; valorDespesa.value = '';
   recalcularEquitativo();
@@ -195,11 +196,13 @@ function recalcularEquitativo(){
   salvar(); atualizar();
 }
 
-function atualizarPorcentagemManual(i, val){
+function atualizarPorcentagemManual(id, val){
   let m = metas[metaAtual];
+  let index = m.despesas.findIndex(d => d.id === id);
   let novaPerc = Number(val) / 100;
-  m.despesas[i].porcentagem = novaPerc;
-  m.despesas[i].manual = true;
+  
+  m.despesas[index].porcentagem = novaPerc;
+  m.despesas[index].manual = true;
   
   let ocupadoManual = m.despesas.reduce((s, d) => s + (d.manual ? d.porcentagem : 0), 0);
   let restante = Math.max(0, 1 - ocupadoManual);
@@ -218,32 +221,39 @@ function priorizarQuitacao(){
     if(m.despesas.length === 0) return;
 
     m.despesas.forEach(d => {
-        d.faltaReal = d.valor - (ganhoTotal * d.porcentagem);
+        let alocado = ganhoTotal * d.porcentagem;
+        d.faltaReal = d.valor - alocado;
         d.manual = false;
     });
 
     let ordenadas = [...m.despesas].sort((a, b) => a.faltaReal - b.faltaReal);
 
     ordenadas.forEach((d, index) => {
-        let originalIdx = m.despesas.indexOf(d);
-        if(index === 0) m.despesas[originalIdx].porcentagem = 0.60;
-        else if(index === 1) m.despesas[originalIdx].porcentagem = 0.25;
-        else if(index === 2) m.despesas[originalIdx].porcentagem = 0.10;
-        else m.despesas[originalIdx].porcentagem = 0.05 / (ordenadas.length - 3 || 1);
+        let realD = m.despesas.find(x => x.id === d.id);
+        if(index === 0) realD.porcentagem = 0.60;
+        else if(index === 1) realD.porcentagem = 0.25;
+        else if(index === 2) realD.porcentagem = 0.10;
+        else realD.porcentagem = 0.05 / (ordenadas.length - 3 || 1);
     });
 
     salvar(); atualizar();
 }
 
-function removerDespesa(i){ 
-  metas[metaAtual].despesas.splice(i,1); 
+function removerDespesa(id){ 
+  let m = metas[metaAtual];
+  m.despesas = m.despesas.filter(d => d.id !== id);
   recalcularEquitativo(); 
 }
 
 function renderDespesas(diaria, ganhoTotal){
   let m = metas[metaAtual];
   let html='';
-  m.despesas.forEach((d, i)=>{
+  
+  // Criamos uma cópia para ordenar sem bagunçar o array original se preferir, 
+  // mas aqui ordenaremos para o usuário ver a prioridade real no topo.
+  let exibicao = [...m.despesas].sort((a, b) => b.porcentagem - a.porcentagem);
+
+  exibicao.forEach((d)=>{
     let alocado = ganhoTotal * d.porcentagem;
     let hoje = diaria * d.porcentagem;
     let faltaParaQuitar = d.valor - alocado;
@@ -252,17 +262,17 @@ function renderDespesas(diaria, ganhoTotal){
     <div class="despesa-item" style="${faltaParaQuitar <= 0 ? 'opacity: 0.5; background: #064e3b;' : ''}">
       <b>${d.nome}</b> ${d.manual ? '<span class="manual-badge">MANUAL</span>' : ''}
       <br>
-      Meta Total: R$ ${d.valor.toFixed(2)} | <span style="color: #fbbf24">% Atual: ${(d.porcentagem*100).toFixed(1)}%</span>
+      Meta Total: R$ ${d.valor.toFixed(2)} | <span style="color: #fbbf24; font-weight:bold;">Prioridade: ${(d.porcentagem*100).toFixed(1)}%</span>
       <br>
-      Ajustar %: <input type='number' value='${(d.porcentagem*100).toFixed(1)}' onchange='atualizarPorcentagemManual(${i},this.value)'>
+      Ajustar %: <input type='number' value='${(d.porcentagem*100).toFixed(1)}' onchange='atualizarPorcentagemManual(${d.id},this.value)'>
       <br>
       <small>💰 Já Acumulado: R$ ${alocado.toFixed(2)}</small><br>
       <small style="color: ${faltaParaQuitar <= 0 ? '#22c55e' : '#ef4444'}">
         ${faltaParaQuitar <= 0 ? '✅ QUITADA!' : '❗ Falta: R$ ' + faltaParaQuitar.toFixed(2)}
       </small>
       <br>
-      <small>🎯 Separar hoje: <b>R$ ${hoje.toFixed(2)}</b></small>
-      <button class='red' style="float:right" onclick='removerDespesa(${i})'>X</button>
+      <small>🎯 Separar hoje: <b style="font-size:1.1em;">R$ ${hoje.toFixed(2)}</b></small>
+      <button class='red' style="float:right" onclick='removerDespesa(${d.id})'>X</button>
     </div>`;
   });
   listaDespesas.innerHTML = html || '<p>Adicione contas para ver a distribuição.</p>';
