@@ -77,7 +77,7 @@
     <div class="card">
         <h3>✨ Criar Nova Meta</h3>
         <input id="nomeMeta" placeholder="Nome da Meta (ex: Aluguel)">
-        <input id="valorMeta" type="number" placeholder="Valor Alvo (R$)">
+        <input id="valorMeta" type="number" placeholder="Valor (Opcional - Soma das Contas)">
         <input id="diasMeta" type="number" placeholder="Prazo em Dias">
         <button class="blue btn-full" onclick="criarMeta()">Criar Meta Agora</button>
     </div>
@@ -230,11 +230,12 @@ function criarMeta() {
     const valor = document.getElementById('valorMeta').value;
     const dias = document.getElementById('diasMeta').value;
     
-    if (!nome || !valor) return alert("Preencha Nome e Valor");
+    // MODIFICADO: Agora só exige o nome obrigatório. O valor pode ficar vazio pois soma automático depois.
+    if (!nome) return alert("Preencha o Nome da Meta");
     
     metas.push({
         nome: nome,
-        alvo: Number(valor),
+        alvo: Number(valor) || 0,
         prazo: Number(dias) || 30,
         ganhosLíquidos: [],
         contas: []
@@ -251,7 +252,8 @@ function renderizarHome() {
     let html = '';
     metas.forEach((m, i) => {
         const total = m.ganhosLíquidos.reduce((s, v) => s + v, 0);
-        const perc = ((total / m.alvo) * 100).toFixed(0);
+        // MODIFICADO: Proteção matemática para não mostrar "NaN" se o alvo for zero
+        const perc = m.alvo > 0 ? ((total / m.alvo) * 100).toFixed(0) : 0; 
         html += `
             <div class="card flex" onclick="abrirMeta(${i})" style="cursor:pointer">
                 <div>
@@ -295,9 +297,14 @@ function registrarGanho() {
 
 function renderizarMetaDetalhe() {
     const m = metas[metaAtivaIndex];
+    
+    // MODIFICADO: AQUI ENTRA A SUA NOVA LÓGICA
+    // Soma o valor de todas as contas para definir o alvo total da meta
+    m.alvo = m.contas.reduce((s, c) => s + c.metaValor, 0); 
+
     const totalLíquido = m.ganhosLíquidos.reduce((s, v) => s + v, 0);
     const diasRestantes = Math.max(0, m.prazo - m.ganhosLíquidos.length);
-    const progresso = (totalLíquido / m.alvo) * 100;
+    const progresso = m.alvo > 0 ? (totalLíquido / m.alvo) * 100 : 0;
     const falta = Math.max(0, m.alvo - totalLíquido);
     const sugerido = falta / (diasRestantes || 1);
 
@@ -409,63 +416,4 @@ function renderizarContas(totalLíquido) {
                            onchange="mudarPercentualManual(${i}, this.value)">
                     <div class="flex">
                         <button class="gray" onclick="toggleModo(${i})">⚙️ Modo</button>
-                        <button class="green" onclick="quitarConta(${i})">Quitar</button>
-                        <button class="red" onclick="removerConta(${i})">🗑️</button>
-                    </div>
-                ` : `<small>CONTA PAGA - Saldo redistribuído</small>`}
-            </div>
-        `;
-        if (c.quitada) htmlQuitadas += item; else htmlAtivas += item;
-    });
-
-    document.getElementById('listaDespesasAtivas').innerHTML = htmlAtivas || '<p><small>Nenhuma conta vinculada.</small></p>';
-    document.getElementById('listaDespesasQuitadas').innerHTML = htmlQuitadas;
-}
-
-/* =========================================
-HISTÓRICO E UTILITÁRIOS
-=========================================
-*/
-function renderizarHistoricoMeta() {
-    const m = metas[metaAtivaIndex];
-    let html = '';
-    [...m.ganhosLíquidos].reverse().forEach((v, i) => {
-        html += `
-            <div class="historico-item">
-                <span>Lançamento ${m.ganhosLíquidos.length - i}</span>
-                <b>R$ ${v.toFixed(2)}</b>
-            </div>`;
-    });
-    document.getElementById('historicoGanhos').innerHTML = html || 'Sem histórico.';
-}
-
-function editarMetaInfo() {
-    snapshot();
-    const m = metas[metaAtivaIndex];
-    const novoNome = prompt("Novo nome:", m.nome);
-    const novoAlvo = prompt("Novo valor alvo:", m.alvo);
-    const novoPrazo = prompt("Novo prazo (dias):", m.prazo);
-    
-    if (novoNome) m.nome = novoNome;
-    if (novoAlvo) m.alvo = Number(novoAlvo);
-    if (novoPrazo) m.prazo = Number(novoPrazo);
-    
-    gravarDados();
-    renderizarMetaDetalhe();
-}
-
-function excluirMetaTotal() {
-    if (confirm("ATENÇÃO: Você vai apagar todos os dados desta meta permanentemente. Confirma?")) {
-        snapshot();
-        metas.splice(metaAtivaIndex, 1);
-        gravarDados();
-        navegar('home');
-    }
-}
-
-// Inicializar
-renderizarHome();
-</script>
-
-</body>
-</html>
+                        
