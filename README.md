@@ -1,326 +1,287 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Financeira PRO MAX - Full Edition</title>
-    <style>
-        body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.5; }
-        .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; }
-        button { padding:8px 12px; border:none; border-radius:8px; cursor:pointer; margin:3px; font-weight: bold; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
-        input { padding:8px; margin:3px; border-radius:8px; border:none; background: #334155; color: white; width: 100px; }
-        .green { background:#22c55e; color: white; }
-        .red { background:#ef4444; color: white; }
-        .blue { background:#3b82f6; color: white; }
-        .orange { background:#f97316; color: white; }
-        .alert { margin-top:10px; font-weight:bold; padding: 10px; border-radius: 8px; }
-        .despesa-item { border-bottom: 1px solid #334155; padding: 10px 0; transition: all 0.3s ease; position: relative; }
-        .manual-badge { background: #3b82f6; font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
-        hr { margin:20px 0; border: 0; border-top: 1px solid #334155; }
-    </style>
+<meta charset="UTF-8">
+<title>Meta Financeira PRO MAX - Intelligence</title>
+<style>
+    :root { --bg: #0f172a; --card: #1e293b; --accent: #3b82f6; --green: #22c55e; --red: #ef4444; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: white; padding: 20px; margin: 0; }
+    .container { max-width: 800px; margin: auto; }
+    .card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    h1, h2, h3 { margin-top: 0; color: #f8fafc; }
+    button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 4px 2px; }
+    button:hover { filter: brightness(1.2); transform: translateY(-1px); }
+    input { padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; width: 120px; margin: 5px 0; }
+    .grid-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+    .green { background: var(--green); } .red { background: var(--red); } .blue { background: var(--accent); }
+    .despesa-item { background: #334155; padding: 12px; border-radius: 8px; margin-bottom: 10px; position: relative; }
+    .quitada { opacity: 0.6; background: #1e293b; border: 1px dashed #475569; }
+    .badge { font-size: 0.7em; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; margin-left: 5px; }
+    .badge-auto { background: #6366f1; } .badge-man { background: #f59e0b; }
+    .progress-bar { height: 8px; background: #0f172a; border-radius: 4px; margin-top: 8px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--green); transition: width 0.5s; }
+    .stats-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+    .stats-box { flex: 1; min-width: 150px; background: #334155; padding: 10px; border-radius: 8px; text-align: center; }
+</style>
 </head>
 <body>
 
-<h1>📊 Metas Financeiras PRO MAX</h1>
-
-<div id="home" class="card">
-  <h3>Suas Metas</h3>
-  <div id="listaMetas"></div>
-  <hr>
-  <h4>Criar Nova Meta</h4>
-  Nome: <input id="nomeMeta" style="width:150px" placeholder="Ex: Carro Novo">
-  Valor: <input id="valorMeta" type="number" placeholder="R$">
-  Dias: <input id="diasMeta" type="number" placeholder="Ex: 30">
-  <button class="green" onclick="criarMeta()">Criar</button>
-</div>
-
-<div id="metaPage" style="display:none;">
-  <div class="card">
-    <button onclick="voltar()">⬅ Voltar</button>
-    <button class="blue" onclick="desfazer()">↩ Desfazer Último</button>
-    <button class="red" onclick="resetarMeta()">Resetar Histórico</button>
-    <button class="red" onclick="excluirMeta()">Excluir Meta</button>
-
-    <h2 id="tituloMeta"></h2>
-
-    <div id="infoEstatisticas">
-        <p id="diaAtual"></p>
-        <p id="percentual"></p>
-        <p id="valorAtual" style="font-size: 1.2em; font-weight: bold;"></p>
-        <p id="restante"></p>
-        <hr>
-        <p id="diaria" style="color: #22c55e; font-weight: bold;"></p>
-        <p id="proximoDia"></p>
-        <p id="dizimoInfo" style="color: #fbbf24; font-weight: bold;"></p>
+<div class="container">
+    <div id="home">
+        <div class="card">
+            <h1>📊 Metas Financeiras PRO MAX</h1>
+            <div id="listaMetas"></div>
+            <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+            <h3>Nova Meta de Faturamento</h3>
+            <div class="grid-inputs">
+                <input id="nomeMeta" placeholder="Ex: Viagem Japão">
+                <input id="valorMeta" type="number" placeholder="Valor Total R$">
+                <input id="diasMeta" type="number" placeholder="Prazo (Dias)">
+            </div>
+            <button class="green" onclick="criarMeta()" style="width: 100%;">Criar Nova Meta</button>
+        </div>
     </div>
 
-    <div class="alert" id="alerta"></div>
+    <div id="metaPage" style="display:none;">
+        <div class="card">
+            <button onclick="voltar()">⬅ Voltar</button>
+            <h2 id="tituloMeta" style="display:inline; margin-left: 15px;"></h2>
+            
+            <div class="stats-row" style="margin-top:20px;">
+                <div class="stats-box"><small>Progresso</small><div id="percTxt" style="font-weight:bold; font-size:1.2em;"></div></div>
+                <div class="stats-box"><small>Acumulado</small><div id="valAtuTxt" style="color:var(--green); font-weight:bold;"></div></div>
+                <div class="stats-box"><small>Restante</small><div id="valRestTxt" style="color:var(--red);"></div></div>
+            </div>
 
-    <div style="margin-top:20px; background: #334155; padding: 15px; border-radius: 8px;">
-        <strong>Registrar Ganho Bruto (R$):</strong>
-        <input id="ganhoInput" type="number" placeholder="0.00">
-        <button class="green" onclick="registrar()">Registrar</button>
+            <div class="progress-bar"><div id="barraProgresso" class="progress-fill"></div></div>
+
+            <div id="infoDinamica" style="margin-top:15px; font-size: 0.9em; color: #cbd5e1;"></div>
+        </div>
+
+        <div class="card">
+            <h3>💰 Registrar Aporte Bruto</h3>
+            <div style="display: flex; gap: 10px;">
+                <input id="ganhoInput" type="number" placeholder="R$ 0,00" style="flex-grow: 1; font-size: 1.2em;">
+                <button class="green" onclick="registrarAporte()">Registrar e Distribuir</button>
+            </div>
+            <small style="color: #94a3b8;">* O sistema desconta R$ 75 de combustível e aplica a divisão.</small>
+        </div>
+
+        <div class="card">
+            <h3>📋 Divisão de Despesas</h3>
+            <div class="grid-inputs">
+                <input id="nomeDespesa" placeholder="Nome da Conta">
+                <input id="valorDespesa" type="number" placeholder="Valor Total (R$)">
+                <button class="blue" onclick="addDespesa()">Adicionar</button>
+            </div>
+            
+            <h4>Contas Ativas</h4>
+            <div id="listaDespesas"></div>
+
+            <h4 style="margin-top:20px; color: #94a3b8;">✅ Contas Quitadas</h4>
+            <div id="listaQuitadas"></div>
+        </div>
+
+        <div class="card">
+            <button class="blue" onclick="resetarManual()">Resetar Todas % para Automático</button>
+            <button class="red" onclick="excluirMeta()">Excluir Meta</button>
+        </div>
     </div>
-  </div>
-
-  <div class="card">
-    <h3>📋 Contas e Distribuição (Ordenado por Prioridade)</h3>
-    
-    <div style="margin-bottom:20px; background: #0f172a; padding: 10px; border-radius: 8px;">
-        <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação (Menores Valores)</button>
-        <p style="margin: 5px 0 0 0;"><small>Foca o esforço nas contas mais próximas de acabar.</small></p>
-    </div>
-
-    <div style="margin-bottom:20px;">
-      Nome: <input id="nomeDespesa" style="width:120px" placeholder="Ex: Aluguel">
-      Valor: <input id="valorDespesa" type="number" placeholder="R$">
-      <button class="blue" onclick="addDespesa()">Adicionar Conta</button>
-    </div>
-    <div id="listaDespesas"></div>
-  </div>
-
-  <div class="card">
-    <h3>📜 Histórico (Líquido)</h3>
-    <div id="historico"></div>
-  </div>
 </div>
 
 <script>
-let metas = JSON.parse(localStorage.getItem('metas')) || [];
-let metaAtual = null;
-let historicoBackup = [];
+let metas = JSON.parse(localStorage.getItem('metas_v2')) || [];
+let metaIdx = null;
 
-const salvar = () => localStorage.setItem('metas', JSON.stringify(metas));
+function salvar() { localStorage.setItem('metas_v2', JSON.stringify(metas)); }
 
-function renderMetas(){
-  const lista = document.getElementById('listaMetas');
-  let html='';
-  metas.forEach((m,i)=>{
-    html+=`<div style="margin-bottom:10px; display: flex; align-items: center; justify-content: space-between; background: #334155; padding: 10px; border-radius: 8px;">
-    <span><b>${m.nome}</b> - R$ ${m.meta.toLocaleString('pt-BR')}</span>
-    <button class="blue" onclick='abrirMeta(${i})'>Abrir</button></div>`;
-  });
-  lista.innerHTML = html || '<p>Nenhuma meta criada.</p>';
+function criarMeta() {
+    const nome = document.getElementById('nomeMeta').value;
+    const valor = Number(document.getElementById('valorMeta').value);
+    const dias = Number(document.getElementById('diasMeta').value);
+    if(!nome || !valor) return alert("Preencha os dados da meta!");
+
+    metas.push({
+        nome, meta: valor, dias, 
+        acumuladoLíquido: 0, 
+        diasPassados: 0,
+        despesas: [
+            { nome: "Combustível", valor: 2250, acumulado: 0, porcentagem: 0, manual: false, fixo: 75 }
+        ]
+    });
+    salvar(); renderHome();
 }
 
-function criarMeta(){
-  const nome = document.getElementById('nomeMeta');
-  const valor = document.getElementById('valorMeta');
-  const dias = document.getElementById('diasMeta');
-
-  if(!nome.value || !valor.value) return alert("Preencha nome e valor!");
-  
-  metas.push({
-    nome: nome.value,
-    meta: Number(valor.value),
-    diasTotal: Number(dias.value) || 1,
-    historico: [],
-    despesas: []
-  });
-  
-  salvar(); 
-  renderMetas();
-  nome.value = ''; valor.value = ''; dias.value = '';
+function renderHome() {
+    let html = '';
+    metas.forEach((m, i) => {
+        html += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div><strong>${m.nome}</strong><br><small>R$ ${m.acumuladoLíquido.toFixed(2)} / R$ ${m.meta}</small></div>
+            <button class="blue" onclick="abrirMeta(${i})">Abrir</button>
+        </div>`;
+    });
+    document.getElementById('listaMetas').innerHTML = html || '<p>Nenhuma meta criada.</p>';
 }
 
-function abrirMeta(i){
-  metaAtual=i;
-  document.getElementById('home').style.display='none';
-  document.getElementById('metaPage').style.display='block';
-  atualizar();
+function abrirMeta(i) {
+    metaIdx = i;
+    document.getElementById('home').style.display = 'none';
+    document.getElementById('metaPage').style.display = 'block';
+    recalcularDistribuicao();
+    atualizarUI();
 }
 
-function voltar(){ 
-  document.getElementById('home').style.display='block'; 
-  document.getElementById('metaPage').style.display='none'; 
-  renderMetas(); 
+function voltar() {
+    document.getElementById('home').style.display = 'block';
+    document.getElementById('metaPage').style.display = 'none';
+    renderHome();
 }
 
-function totalGanho(m){ return m.historico.reduce((s,v)=>s+v,0); }
+function addDespesa() {
+    const nome = document.getElementById('nomeDespesa').value;
+    const valor = Number(document.getElementById('valorDespesa').value);
+    if(!nome || !valor) return;
 
-function atualizar(){
-  let m = metas[metaAtual];
-  let ganho = totalGanho(m);
-  let dia = m.historico.length;
-  let restanteVal = m.meta - ganho;
-  let diasRest = m.diasTotal - dia;
-  
-  // Evitar divisão por zero ou números negativos
-  let diariaLiquida = diasRest > 0 ? restanteVal / diasRest : restanteVal;
-  if (diariaLiquida < 0) diariaLiquida = 0;
-
-  let diariaBruta = diariaLiquida / 0.9;
-  let progresso = (ganho / m.meta) * 100;
-  let deveria = (m.meta / m.diasTotal) * dia;
-
-  document.getElementById('tituloMeta').innerText = m.nome;
-  document.getElementById('diaAtual').innerText = `📅 Dia ${dia} de ${m.diasTotal}`;
-  document.getElementById('percentual').innerText = `📈 Progresso: ${progresso.toFixed(1)}%`;
-  document.getElementById('valorAtual').innerText = `💰 Você tem acumulado: R$ ${ganho.toFixed(2)}`;
-  document.getElementById('restante').innerText = `❗ Falta: R$ ${Math.max(0, restanteVal).toFixed(2)}`;
-  
-  document.getElementById('diaria').innerText = `Meta diária (LÍQUIDA): R$ ${diariaLiquida.toFixed(2)}`;
-  document.getElementById('proximoDia').innerText = `👉 Próximo Bruto sugerido: R$ ${diariaBruta.toFixed(2)}`;
-  document.getElementById('dizimoInfo').innerText = `🙏 Dízimo sugerido (10%): R$ ${(diariaBruta * 0.1).toFixed(2)}`;
-
-  const alertBox = document.getElementById('alerta');
-  alertBox.innerText = ganho < deveria ? '⚠️ Abaixo do esperado para o dia' : '🔥 No ritmo/Meta batida!';
-  alertBox.className = 'alert ' + (ganho < deveria ? 'red' : 'green');
-
-  renderHistorico();
-  renderDespesas(diariaLiquida, ganho);
+    metas[metaIdx].despesas.push({
+        nome, valor, acumulado: 0, porcentagem: 0, manual: false
+    });
+    
+    document.getElementById('nomeDespesa').value = '';
+    document.getElementById('valorDespesa').value = '';
+    recalcularDistribuicao();
+    atualizarUI();
 }
 
-function registrar(){
-  let m = metas[metaAtual];
-  const input = document.getElementById('ganhoInput');
-  if(!input.value) return;
-  
-  historicoBackup = [...m.historico];
-  m.historico.push(Number(input.value) * 0.9);
-  input.value = '';
-  salvar(); 
-  atualizar();
+function recalcularDistribuicao() {
+    let m = metas[metaIdx];
+    // Filtra apenas despesas que ainda não foram quitadas
+    let ativas = m.despesas.filter(d => d.acumulado < d.valor && !d.fixo);
+    
+    let ocupadoManual = ativas.reduce((acc, d) => acc + (d.manual ? d.porcentagem : 0), 0);
+    
+    if (ocupadoManual > 1) {
+        alert("Soma manual maior que 100%! Ajustando...");
+        ativas.forEach(d => { if(d.manual) d.porcentagem = d.porcentagem / ocupadoManual; });
+        ocupadoManual = 1;
+    }
+
+    let restante = 1 - ocupadoManual;
+    let auto = ativas.filter(d => !d.manual);
+    
+    if(auto.length > 0) {
+        let fatia = restante / auto.length;
+        auto.forEach(d => d.porcentagem = fatia);
+    }
+    salvar();
 }
 
-function renderHistorico(){
-  let m = metas[metaAtual];
-  let html='';
-  [...m.historico].reverse().forEach((v, idx)=>{
-    let originalIdx = m.historico.length - 1 - idx;
-    html+=`<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-        <span>Dia ${originalIdx+1}: R$ ${v.toFixed(2)}</span>
-        <button class='red' style="padding:2px 8px" onclick='apagarDia(${originalIdx})'>🗑️</button>
-    </div>`;
-  });
-  document.getElementById('historico').innerHTML = html || 'Sem registros.';
-}
+function registrarAporte() {
+    let m = metas[metaIdx];
+    let bruto = Number(document.getElementById('ganhoInput').value);
+    if(bruto <= 0) return;
 
-function apagarDia(i){
-  metas[metaAtual].historico.splice(i,1);
-  salvar(); atualizar();
-}
+    // 1. Desconto Fixo (Combustível R$ 75)
+    let liquido = bruto - 75;
+    let comb = m.despesas.find(d => d.fixo);
+    if(comb) comb.acumulado += 75;
 
-function addDespesa(){
-  const nome = document.getElementById('nomeDespesa');
-  const valor = document.getElementById('valorDespesa');
-  if(!nome.value || !valor.value) return;
+    if(liquido < 0) liquido = 0;
 
-  metas[metaAtual].despesas.push({
-    nome: nome.value,
-    valor: Number(valor.value),
-    porcentagem: 0,
-    manual: false,
-    id: Date.now()
-  });
-  nome.value = ''; valor.value = '';
-  recalcularEquitativo();
-}
-
-function recalcularEquitativo(){
-  let m = metas[metaAtual];
-  if(m.despesas.length === 0) return;
-  let fatia = 1 / m.despesas.length;
-  m.despesas.forEach(d => { d.porcentagem = fatia; d.manual = false; });
-  salvar(); atualizar();
-}
-
-function atualizarPorcentagemManual(id, val){
-  let m = metas[metaAtual];
-  let index = m.despesas.findIndex(d => d.id === id);
-  let novaPerc = Number(val) / 100;
-  
-  m.despesas[index].porcentagem = novaPerc;
-  m.despesas[index].manual = true;
-  
-  let ocupadoManual = m.despesas.reduce((s, d) => s + (d.manual ? d.porcentagem : 0), 0);
-  let disponivel = Math.max(0, 1 - ocupadoManual);
-  let automaticas = m.despesas.filter(d => !d.manual);
-  
-  if(automaticas.length > 0) {
-      let fatia = disponivel / automaticas.length;
-      automaticas.forEach(d => d.porcentagem = fatia);
-  }
-  salvar(); atualizar();
-}
-
-function priorizarQuitacao(){
-    let m = metas[metaAtual];
-    let ganhoTotal = totalGanho(m);
-    if(m.despesas.length === 0) return;
-
-    // Ordenar por quem falta menos para quitar
-    let ordenadas = [...m.despesas].sort((a, b) => {
-        let faltaA = a.valor - (ganhoTotal * a.porcentagem);
-        let faltaB = b.valor - (ganhoTotal * b.porcentagem);
-        return faltaA - faltaB;
+    // 2. Distribuir entre ativas
+    m.despesas.forEach(d => {
+        if(!d.fixo && d.acumulado < d.valor) {
+            d.acumulado += liquido * d.porcentagem;
+        }
     });
 
-    ordenadas.forEach((d, index) => {
-        let realD = m.despesas.find(x => x.id === d.id);
-        realD.manual = false;
-        if(index === 0) realD.porcentagem = 0.60;
-        else if(index === 1) realD.porcentagem = 0.25;
-        else if(index === 2) realD.porcentagem = 0.10;
-        else realD.porcentagem = 0.05 / (ordenadas.length - 3 || 1);
+    m.acumuladoLíquido += liquido;
+    m.diasPassados++;
+    
+    document.getElementById('ganhoInput').value = '';
+    salvar();
+    atualizarUI();
+}
+
+function atualizarUI() {
+    let m = metas[metaIdx];
+    document.getElementById('tituloMeta').innerText = m.nome;
+    
+    let perc = (m.acumuladoLíquido / m.meta) * 100;
+    document.getElementById('percTxt').innerText = perc.toFixed(1) + "%";
+    document.getElementById('valAtuTxt').innerText = "R$ " + m.acumuladoLíquido.toFixed(2);
+    document.getElementById('valRestTxt').innerText = "R$ " + (m.meta - m.acumuladoLíquido).toFixed(2);
+    document.getElementById('barraProgresso').style.width = Math.min(perc, 100) + "%";
+
+    let diaria = (m.meta - m.acumuladoLíquido) / Math.max((m.dias - m.diasPassados), 1);
+    document.getElementById('infoDinamica').innerHTML = `
+        📅 Dia ${m.diasPassados} de ${m.dias} | 🎯 Meta Diária Sugerida: <strong>R$ ${diaria.toFixed(2)}</strong>
+    `;
+
+    renderDespesas();
+}
+
+function renderDespesas() {
+    let m = metas[metaIdx];
+    let htmlAtivas = '';
+    let htmlQuitadas = '';
+
+    m.despesas.forEach((d, i) => {
+        let percExibida = (d.porcentagem * 100).toFixed(1);
+        let progress = (d.acumulado / d.valor) * 100;
+        
+        let itemHtml = `
+            <div class="despesa-item ${d.acumulado >= d.valor ? 'quitada' : ''}">
+                <div style="display:flex; justify-content:space-between;">
+                    <span><strong>${d.nome}</strong> ${d.manual ? '<span class="badge badge-man">Manual</span>' : '<span class="badge badge-auto">Auto</span>'}</span>
+                    <span>R$ ${d.acumulado.toFixed(2)} / ${d.valor}</span>
+                </div>
+                ${!d.fixo && d.acumulado < d.valor ? `
+                    <div style="margin-top:8px;">
+                        % na divisão: <input type="number" value="${percExibida}" 
+                        onchange="ajustarManual(${i}, this.value)" style="width:60px; padding:4px;"> 
+                        <button class="red" onclick="removerDespesa(${i})" style="float:right; padding:2px 8px;">X</button>
+                    </div>
+                ` : d.fixo ? '<small>Custo Fixo Diário: R$ 75,00</small>' : ''}
+                <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(progress, 100)}%; background:${progress>=100?'#facc15':''}"></div></div>
+            </div>
+        `;
+
+        if(d.acumulado >= d.valor && !d.fixo) htmlQuitadas += itemHtml;
+        else htmlAtivas += itemHtml;
     });
 
-    salvar(); atualizar();
+    document.getElementById('listaDespesas').innerHTML = htmlAtivas;
+    document.getElementById('listaQuitadas').innerHTML = htmlQuitadas;
 }
 
-function removerDespesa(id){ 
-  let m = metas[metaAtual];
-  m.despesas = m.despesas.filter(d => d.id !== id);
-  recalcularEquitativo(); 
+function ajustarManual(i, val) {
+    metas[metaIdx].despesas[i].porcentagem = Number(val) / 100;
+    metas[metaIdx].despesas[i].manual = true;
+    recalcularDistribuicao();
+    atualizarUI();
 }
 
-function renderDespesas(diaria, ganhoTotal){
-  let m = metas[metaAtual];
-  const container = document.getElementById('listaDespesas');
-  let html='';
-  let exibicao = [...m.despesas].sort((a, b) => b.porcentagem - a.porcentagem);
-
-  exibicao.forEach((d)=>{
-    let alocado = ganhoTotal * d.porcentagem;
-    let hoje = diaria * d.porcentagem;
-    let faltaParaQuitar = d.valor - alocado;
-
-    html+=`
-    <div class="despesa-item" style="${faltaParaQuitar <= 0 ? 'opacity: 0.6; background: #064e3b; padding:10px; border-radius:8px;' : ''}">
-      <button class='red' style="float:right" onclick='removerDespesa(${d.id})'>X</button>
-      <b>${d.nome}</b> ${d.manual ? '<span class="manual-badge">MANUAL</span>' : ''}
-      <br>
-      Meta Total: R$ ${d.valor.toFixed(2)} | <span style="color: #fbbf24; font-weight:bold;">Prioridade: ${(d.porcentagem*100).toFixed(1)}%</span>
-      <br>
-      Ajustar %: <input type='number' style="width:60px" value='${(d.porcentagem*100).toFixed(1)}' onchange='atualizarPorcentagemManual(${d.id},this.value)'>
-      <br>
-      <small>💰 Já Acumulado: R$ ${alocado.toFixed(2)}</small><br>
-      <small style="color: ${faltaParaQuitar <= 0 ? '#22c55e' : '#ef4444'}">
-        ${faltaParaQuitar <= 0 ? '✅ QUITADA!' : '❗ Falta: R$ ' + faltaParaQuitar.toFixed(2)}
-      </small>
-      <br>
-      <small>🎯 Separar hoje: <b style="font-size:1.1em;">R$ ${hoje.toFixed(2)}</b></small>
-    </div>`;
-  });
-  container.innerHTML = html || '<p>Adicione contas para ver a distribuição.</p>';
+function resetarManual() {
+    metas[metaIdx].despesas.forEach(d => d.manual = false);
+    recalcularDistribuicao();
+    atualizarUI();
 }
 
-function desfazer(){ 
-    if(metaAtual !== null && historicoBackup.length >= 0){ 
-        metas[metaAtual].historico = [...historicoBackup]; 
-        salvar(); 
-        atualizar(); 
-        alert("Última ação desfeita!");
-    } 
+function removerDespesa(i) {
+    metas[metaIdx].despesas.splice(i, 1);
+    recalcularDistribuicao();
+    atualizarUI();
 }
 
-function resetarMeta(){ if(confirm("Zerar histórico?")) { metas[metaAtual].historico=[]; salvar(); atualizar(); } }
-function excluirMeta(){ if(confirm("Excluir meta permanentemente?")) { metas.splice(metaAtual,1); salvar(); voltar(); } }
+function excluirMeta() {
+    if(confirm("Deseja deletar esta meta?")) {
+        metas.splice(metaIdx, 1);
+        salvar();
+        voltar();
+    }
+}
 
-// Inicialização
-renderMetas();
+renderHome();
 </script>
-
 </body>
 </html>
