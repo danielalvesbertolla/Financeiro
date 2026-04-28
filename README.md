@@ -2,275 +2,249 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX - Quitação Inteligente</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Financeira PRO - Versão Final de Ouro</title>
 <style>
-body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.5; }
-.card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; }
-button { padding:8px 12px; border:none; border-radius:8px; cursor:pointer; margin:3px; font-weight: bold; transition: 0.2s; }
-button:hover { opacity: 0.8; }
-input { padding:8px; margin:3px; border-radius:8px; border:none; background: #334155; color: white; width: 100px; }
-.green { background:#22c55e; }
-.red { background:#ef4444; }
-.blue { background:#3b82f6; }
-.orange { background:#f97316; }
-.gray { background:#64748b; }
-.alert { margin-top:10px; font-weight:bold; padding: 10px; border-radius: 8px; }
-.despesa-item { border-bottom: 1px solid #334155; padding: 12px 0; }
-.quitada-item { opacity: 0.7; background: #064e3b; padding: 10px; border-radius: 8px; margin-bottom: 5px; border-left: 5px solid #22c55e; }
-.finance-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #475569; }
+    body { font-family: 'Segoe UI', sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.6; }
+    .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    button { padding:10px 15px; border:none; border-radius:8px; cursor:pointer; font-weight: bold; transition: 0.3s; margin: 4px 2px; }
+    button:hover { filter: brightness(1.2); }
+    input { padding:10px; border-radius:8px; border:none; background: #334155; color: white; width: 120px; margin: 5px 0; }
+    .green { background:#22c55e; } .red { background:#ef4444; } .blue { background:#3b82f6; } .orange { background:#f59e0b; } .gray { background:#64748b; }
+    .finance-box { background: #0f172a; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #3b82f6; }
+    .finance-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #334155; }
+    .despesa-item { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 10px; margin-bottom: 10px; position: relative; }
+    .quitada-item { background: #064e3b; border: 1px solid #22c55e; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 6px solid #22c55e; }
+    .alert { padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; margin: 10px 0; }
 </style>
 </head>
 <body>
 
-<h1>📊 Metas Financeiras PRO MAX</h1>
-
-<div id="home" class="card">
-  <h3>Meus Projetos</h3>
-  <div id="listaMetas"></div>
-  <hr style="margin:20px 0; border: 0; border-top: 1px solid #334155;">
-  <h4>Novo Projeto</h4>
-  Nome: <input id="nomeMeta" style="width:150px">
-  Dias: <input id="diasMeta" type="number">
-  <button class="green" onclick="criarMeta()">Criar</button>
+<div id="homePage">
+    <h1>📊 Gestor Financeiro PRO</h1>
+    <div class="card">
+        <h3>Meus Projetos</h3>
+        <div id="listaMetas"></div>
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+        <h4>Novo Projeto</h4>
+        <input id="nomeMeta" placeholder="Ex: Abril 2026">
+        <input id="diasMeta" type="number" placeholder="Dias">
+        <button class="green" onclick="criarProjeto()">Iniciar</button>
+    </div>
 </div>
 
 <div id="metaPage" style="display:none;">
-  <div class="card">
-    <button onclick="voltar()">⬅ Voltar</button>
-    <button class="blue" onclick="desfazerAcoes()" title="Desfazer priorização ou exclusão de contas">↩ Desfazer Alterações</button>
-    <h2 id="tituloMeta"></h2>
-
-    <div id="infoEstatisticas">
-        <p id="diaAtual"></p>
-        <p id="valorAtual" style="font-size: 1.1em; font-weight: bold;"></p>
-        <p id="restante" style="color: #ef4444;"></p>
-        
-        <div style="background: #0f172a; padding: 15px; border-radius: 8px; margin-top: 10px;">
-            <div class="finance-row"><span>🎯 Meta Diária (Contas Ativas):</span> <span id="diaria" style="color: #22c55e; font-weight: bold;"></span></div>
-            <div class="finance-row"><span>⛽ Combustível (Fixo):</span> <span style="color: #ef4444;">R$ 75,00</span></div>
-            <div class="finance-row"><span>🙏 Dízimo (10%):</span> <span id="dizimoInfo" style="color: #fbbf24;"></span></div>
-            <div class="finance-row" style="border:none; margin-top: 10px; font-size: 1.2em;">
-                <span>🚀 <b>BRUTO SUGERIDO:</b></span> <span id="proximoDia" style="color: #3b82f6; font-weight: bold;"></span>
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+            <button class="gray" onclick="voltar()">⬅ Voltar</button>
+            <div>
+                <button class="blue" onclick="desfazerAlteracaoEstrutura()">↩ Desfazer Ajustes</button>
+                <button class="blue" onclick="desfazerUltimoGanho()">↩ Desfazer Ganho</button>
+                <button class="red" onclick="excluirProjetoAtual()">🗑 Excluir Tudo</button>
             </div>
+        </div>
+        
+        <h2 id="tituloMetaDisplay"></h2>
+        
+        <div id="statsPrimarias">
+            <div id="progressoTexto"></div>
+            <div id="saldoAtual" style="font-size: 1.3em; color: #22c55e; font-weight: bold;"></div>
+            <div id="faltaTotal" style="color: #ef4444;"></div>
+        </div>
+
+        <div class="finance-box">
+            <div class="finance-row"><span>🎯 Meta Diária (Contas Ativas):</span> <span id="diariaLiquida" style="color:#22c55e"></span></div>
+            <div class="finance-row"><span>⛽ Combustível (Fixo):</span> <span style="color:#ef4444">R$ 75,00</span></div>
+            <div class="finance-row"><span>🙏 Dízimo Sugerido (10%):</span> <span id="valDizimoDisplay" style="color:#fbbf24"></span></div>
+            <div class="finance-row" style="border:none; font-size:1.2em; margin-top:10px;">
+                <span>🚀 <b>BRUTO NECESSÁRIO HOJE:</b></span> <span id="brutoSugerido" style="color:#3b82f6; font-weight:bold;"></span>
+            </div>
+        </div>
+
+        <div id="alertaRitmo" class="alert"></div>
+
+        <div style="background: #334155; padding: 15px; border-radius: 10px;">
+            <strong>Registrar Ganho Bruto REAL:</strong><br>
+            <input id="ganhoRealInput" type="number" placeholder="R$ 0,00" style="width: 150px;">
+            <button class="green" onclick="registrarGanhoReal()">Registrar</button>
         </div>
     </div>
 
-    <div style="margin-top:20px; background: #334155; padding: 15px; border-radius: 8px;">
-        <strong>Registrar Ganho Bruto REAL (R$):</strong>
-        <input id="ganhoInput" type="number" placeholder="0.00">
-        <button class="green" onclick="registrar()">Registrar</button>
+    <div class="card">
+        <h3>📋 Contas em Aberto</h3>
+        <button class="orange" onclick="priorizarBolaDeNeve()" style="width: 100%; margin-bottom: 15px;">🚀 Priorizar Quitação (Bola de Neve)</button>
+        <div style="margin-bottom: 15px;">
+            <input id="nomeDespesa" placeholder="Conta" style="width: 160px;">
+            <input id="valorDespesa" type="number" placeholder="Valor R$">
+            <button class="blue" onclick="adicionarDespesa()">Adicionar</button>
+        </div>
+        <div id="listaAtivas"></div>
     </div>
-  </div>
 
-  <div class="card">
-    <h3>📋 Contas em Aberto</h3>
-    <div style="margin-bottom:20px;">
-        <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação Inteligente</button>
+    <div class="card">
+        <h3>✅ Contas Quitadas</h3>
+        <div id="listaQuitadas"></div>
     </div>
-    <div style="margin-bottom:20px;">
-      Nome: <input id="nomeDespesa" style="width:120px">
-      Valor: <input id="valorDespesa" type="number">
-      <button class="blue" onclick="addDespesa()">Adicionar</button>
+
+    <div class="card">
+        <h3>📜 Histórico Líquido</h3>
+        <div id="historicoDisplay"></div>
     </div>
-    <div id="listaDespesas"></div>
-  </div>
-
-  <div class="card" style="border-top: 4px solid #22c55e;">
-    <h3>✅ Contas Quitadas</h3>
-    <div id="listaQuitadas"></div>
-  </div>
-
-  <div class="card">
-    <h3>📜 Histórico Líquido</h3>
-    <div id="historico"></div>
-  </div>
 </div>
 
 <script>
-let metas = JSON.parse(localStorage.getItem('metas')) || [];
-let metaAtual = null;
-let despesasBackup = null; // Backup para o botão Desfazer Alterações
-const CUSTO_COMBUSTIVEL = 75;
+let projetos = JSON.parse(localStorage.getItem('financas_final')) || [];
+let idxAtual = null;
+let backupContas = null;
+const GASOLINA_FIXA = 75;
 
-function salvar(){ localStorage.setItem('metas', JSON.stringify(metas)); }
+function salvar() { localStorage.setItem('financas_final', JSON.stringify(projetos)); }
 
-function renderMetas(){
-  let html='';
-  metas.forEach((m,i)=>{
-    let total = m.despesas.reduce((s, d) => s + d.valor, 0);
-    html+=`<div style="margin-bottom:10px;"><b>${m.nome}</b> (R$ ${total.toFixed(2)}) 
-    <button class="blue" onclick='abrirMeta(${i})'>Abrir</button>
-    <button class="red" onclick='excluirProjeto(${i})'>🗑</button></div>`;
-  });
-  listaMetas.innerHTML=html;
-}
-
-function criarMeta(){
-  if(!nomeMeta.value || !diasMeta.value) return;
-  metas.push({ nome: nomeMeta.value, meta: 0, diasTotal: Number(diasMeta.value), historico: [], despesas: [] });
-  salvar(); renderMetas();
-  nomeMeta.value = ''; diasMeta.value = '';
-}
-
-function abrirMeta(i){
-  metaAtual=i;
-  home.style.display='none';
-  metaPage.style.display='block';
-  atualizar();
-}
-
-function voltar(){ home.style.display='block'; metaPage.style.display='none'; renderMetas(); }
-
-function totalGanho(m){ return m.historico.reduce((s,v)=>s+v,0); }
-
-function atualizar(){
-  let m = metas[metaAtual];
-  let ganhoTotalAcumulado = totalGanho(m);
-  
-  // 1. Identificar o que está quitado e o que está ativo
-  let ativas = m.despesas.filter(d => (ganhoTotalAcumulado * d.porcentagem) < d.valor);
-  let quitadas = m.despesas.filter(d => (ganhoTotalAcumulado * d.porcentagem) >= d.valor);
-
-  // 2. Recalcular Meta Total (apenas das ativas para o cálculo diário)
-  let metaRestanteAtivas = ativas.reduce((s, d) => s + (d.valor - (ganhoTotalAcumulado * d.porcentagem)), 0);
-  
-  let dia = m.historico.length;
-  let diasRest = Math.max(1, m.diasTotal - dia);
-  
-  let diariaLiquida = metaRestanteAtivas / diasRest;
-  let diariaBruta = (diariaLiquida + CUSTO_COMBUSTIVEL) / 0.9;
-
-  tituloMeta.innerText = m.nome;
-  diaAtual.innerText = `📅 Dia ${dia} de ${m.diasTotal}`;
-  valorAtual.innerText = `💰 Saldo p/ Contas: R$ ${ganhoTotalAcumulado.toFixed(2)}`;
-  restante.innerText = `❗ Falta quitar: R$ ${metaRestanteAtivas.toFixed(2)}`;
-  
-  diaria.innerText = `R$ ${diariaLiquida.toFixed(2)}`;
-  proximoDia.innerText = `R$ ${diariaBruta.toFixed(2)}`;
-  dizimoInfo.innerText = `R$ ${(diariaBruta * 0.1).toFixed(2)}`;
-
-  renderHistorico();
-  renderListas(ativas, quitadas, diariaLiquida, ganhoTotalAcumulado);
-}
-
-function registrar(){
-  let m = metas[metaAtual];
-  let bruto = Number(ganhoInput.value);
-  if(!bruto) return;
-
-  let vDizimo = bruto * 0.10;
-  let vContas = (bruto - vDizimo) - CUSTO_COMBUSTIVEL;
-
-  if(confirm(`Confirmar Registro:\n🙏 Dízimo: R$ ${vDizimo.toFixed(2)}\n⛽ Combustível: R$ ${CUSTO_COMBUSTIVEL.toFixed(2)}\n💰 Para Contas: R$ ${vContas.toFixed(2)}`)) {
-      m.historico.push(vContas);
-      ganhoInput.value = '';
-      salvar(); atualizar();
-  }
-}
-
-function renderListas(ativas, quitadas, diaria, totalGeral){
-  let htmlAtivas = '';
-  ativas.forEach(d => {
-    let alocado = totalGeral * d.porcentagem;
-    let hoje = diaria * d.porcentagem;
-    htmlAtivas += `<div class="despesa-item">
-      <b>${d.nome}</b> <span style="color:#fbbf24">(${(d.porcentagem*100).toFixed(1)}%)</span><br>
-      Falta: R$ ${(d.valor - alocado).toFixed(2)} | <small>Hoje: R$ ${hoje.toFixed(2)}</small>
-      <button class="red" style="float:right" onclick="removerDespesa(${d.id})">X</button>
-    </div>`;
-  });
-  listaDespesas.innerHTML = htmlAtivas || '<p>Todas as contas foram quitadas! 🎉</p>';
-
-  let htmlQuitadas = '';
-  quitadas.forEach(d => {
-    htmlQuitadas += `<div class="quitada-item">
-      <b>✅ ${d.nome}</b> - Total R$ ${d.valor.toFixed(2)}
-      <button class="gray" style="float:right; font-size:10px" onclick="reabrirDespesa(${d.id})">REABRIR</button>
-    </div>`;
-  });
-  listaQuitadas.innerHTML = htmlQuitadas || '<p>Nenhuma conta quitada ainda.</p>';
-}
-
-function addDespesa(){
-  backupAcao();
-  let m = metas[metaAtual];
-  m.despesas.push({ nome: nomeDespesa.value, valor: Number(valorDespesa.value), porcentagem: 0, id: Date.now() });
-  nomeDespesa.value = ''; valorDespesa.value = '';
-  redistribuirSobra();
-}
-
-function redistribuirSobra(){
-  let m = metas[metaAtual];
-  let ganhoTotal = totalGanho(m);
-  // Só distribui entre as que NÃO estão quitadas
-  let ativas = m.despesas.filter(d => (ganhoTotal * d.porcentagem) < d.valor);
-  if(ativas.length > 0){
-    let fatia = 1 / ativas.length;
-    m.despesas.forEach(d => {
-        if(ativas.includes(d)) d.porcentagem = fatia;
-        else if(!m.despesas.find(x => x.id === d.id && (ganhoTotal * x.porcentagem) >= x.valor)) d.porcentagem = 0;
+function renderHome() {
+    let html = '';
+    projetos.forEach((p, i) => {
+        let total = p.despesas.reduce((s, d) => s + d.valor, 0);
+        html += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+            <div><strong>${p.nome}</strong><br><small>Meta: R$ ${total.toFixed(2)}</small></div>
+            <button class="blue" onclick="abrirProjeto(${i})">Abrir</button>
+        </div>`;
     });
-  }
-  salvar(); atualizar();
+    listaMetas.innerHTML = html || '<p>Nenhum projeto.</p>';
 }
 
-function priorizarQuitacao(){
-    backupAcao();
-    let m = metas[metaAtual];
-    let ganhoTotal = totalGanho(m);
-    let ativas = m.despesas.filter(d => (ganhoTotal * d.porcentagem) < d.valor);
+function criarProjeto() {
+    if (!nomeMeta.value || !diasMeta.value) return;
+    projetos.push({ nome: nomeMeta.value, dias: Number(diasMeta.value), historico: [], despesas: [] });
+    salvar(); renderHome();
+    nomeMeta.value = ''; diasMeta.value = '';
+}
+
+function abrirProjeto(i) {
+    idxAtual = i;
+    homePage.style.display = 'none';
+    metaPage.style.display = 'block';
+    atualizarTudo();
+}
+
+function voltar() { homePage.style.display = 'block'; metaPage.style.display = 'none'; renderHome(); }
+
+function atualizarTudo() {
+    let p = projetos[idxAtual];
+    let totalAcumulado = p.historico.reduce((s, v) => s + v, 0);
     
-    if(ativas.length === 0) return;
+    // Filtro inteligente: quem já recebeu sua parte total?
+    let ativas = p.despesas.filter(d => (totalAcumulado * d.porcentagem) < (d.valor - 0.01));
+    let quitadas = p.despesas.filter(d => (totalAcumulado * d.porcentagem) >= (d.valor - 0.01));
 
-    ativas.sort((a, b) => (a.valor - (ganhoTotal * a.porcentagem)) - (b.valor - (ganhoTotal * b.porcentagem)));
+    // Meta Diária baseada no que FALTA nas ativas
+    let faltaNasAtivas = ativas.reduce((s, d) => s + (d.valor - (totalAcumulado * d.porcentagem)), 0);
+    let metaTotalOriginal = p.despesas.reduce((s, d) => s + d.valor, 0);
+    let diasRestantes = Math.max(1, p.dias - p.historico.length);
 
-    let pesos = [0.70, 0.20, 0.10];
-    m.despesas.forEach(d => {
-        let rank = ativas.indexOf(d);
-        if(rank !== -1) d.porcentagem = pesos[rank] || (0.05 / (ativas.length - 2 || 1));
-        else d.porcentagem = d.porcentagem; // mantém se já estiver quitada
-    });
-    salvar(); atualizar();
+    let diariaLiq = faltaNasAtivas / diasRestantes;
+    let brutoSug = (diariaLiq + GASOLINA_FIXA) / 0.9;
+
+    tituloMetaDisplay.innerText = p.nome;
+    progressoTexto.innerText = `Dia ${p.historico.length} de ${p.dias}`;
+    saldoAtual.innerText = `Líquido Acumulado: R$ ${totalAcumulado.toFixed(2)}`;
+    faltaTotal.innerText = `Falta para Meta: R$ ${faltaNasAtivas.toFixed(2)}`;
+    
+    document.getElementById('diariaLiquida').innerText = `R$ ${diariaLiq.toFixed(2)}`;
+    document.getElementById('brutoSugerido').innerText = `R$ ${brutoSug.toFixed(2)}`;
+    document.getElementById('valDizimoDisplay').innerText = `R$ ${(brutoSug * 0.1).toFixed(2)}`;
+
+    let ritmoIdeal = (metaTotalOriginal / p.dias) * p.historico.length;
+    alertaRitmo.innerText = totalAcumulado < ritmoIdeal ? "⚠️ Ritmo Lento" : "🔥 No Ritmo!";
+    alertaRitmo.className = "alert " + (totalAcumulado < ritmoIdeal ? "red" : "green");
+
+    renderListas(ativas, quitadas, totalAcumulado, diariaLiq);
+    renderHistorico(p.historico);
 }
 
-function reabrirDespesa(id){
-    backupAcao();
-    let m = metas[metaAtual];
-    let d = m.despesas.find(x => x.id === id);
-    d.porcentagem = 0; // Zera para redistribuir
-    redistribuirSobra();
-}
+function registrarGanhoReal() {
+    let p = projetos[idxAtual];
+    let bruto = Number(ganhoRealInput.value);
+    if (!bruto) return;
 
-function removerDespesa(id){
-    backupAcao();
-    metas[metaAtual].despesas = metas[metaAtual].despesas.filter(d => d.id !== id);
-    redistribuirSobra();
-}
+    let dizimo = bruto * 0.1;
+    let liquido = (bruto - dizimo) - GASOLINA_FIXA;
 
-function backupAcao(){
-    despesasBackup = JSON.parse(JSON.stringify(metas[metaAtual].despesas));
-}
-
-function desfazerAcoes(){
-    if(despesasBackup){
-        metas[metaAtual].despesas = JSON.parse(JSON.stringify(despesasBackup));
-        despesasBackup = null;
-        salvar(); atualizar();
-    } else {
-        alert("Não há alterações recentes para desfazer.");
+    if (confirm(`REGISTRO:\n🙏 Dízimo: R$ ${dizimo.toFixed(2)}\n⛽ Gasolina: R$ 75.00\n💰 Líquido: R$ ${liquido.toFixed(2)}`)) {
+        p.historico.push(liquido);
+        ganhoRealInput.value = '';
+        salvar(); atualizarTudo();
     }
 }
 
-function renderHistorico(){
-  let m = metas[metaAtual];
-  let html = m.historico.slice().reverse().map((v, i) => `<div>Dia ${m.historico.length - i}: R$ ${v.toFixed(2)}</div>`).join('');
-  historico.innerHTML = html;
+function renderListas(ativas, quitadas, totalGeral, diariaLiq) {
+    let hAtivas = '';
+    ativas.sort((a,b) => b.porcentagem - a.porcentagem).forEach(d => {
+        let alocado = totalGeral * d.porcentagem;
+        hAtivas += `<div class="despesa-item">
+            <b>${d.nome}</b> <span style="color:#fbbf24">${(d.porcentagem*100).toFixed(1)}%</span><br>
+            Falta: R$ ${(d.valor - alocado).toFixed(2)} | <small>Hoje: R$ ${(diariaLiq * d.porcentagem).toFixed(2)}</small>
+            <button class="red" style="position:absolute; top:5px; right:5px;" onclick="removerDespesa(${d.id})">X</button>
+        </div>`;
+    });
+    listaAtivas.innerHTML = hAtivas || '<p>Tudo pronto!</p>';
+
+    let hQuitadas = '';
+    quitadas.forEach(d => {
+        hQuitadas += `<div class="quitada-item">
+            ✅ <b>${d.nome}</b> (R$ ${d.valor.toFixed(2)})
+            <button class="gray" style="float:right; font-size:10px;" onclick="reabrirConta(${d.id})">Reabrir</button>
+        </div>`;
+    });
+    listaQuitadas.innerHTML = hQuitadas;
 }
 
-function excluirProjeto(i){ if(confirm("Excluir projeto?")) { metas.splice(i,1); salvar(); renderMetas(); } }
+function adicionarDespesa() {
+    backupAcao();
+    let p = projetos[idxAtual];
+    p.despesas.push({ id: Date.now(), nome: nomeDespesa.value, valor: Number(valorDespesa.value), porcentagem: 0 });
+    nomeDespesa.value = ''; valorDespesa.value = '';
+    redistribuirAtivas();
+}
 
-renderMetas();
+function redistribuirAtivas() {
+    let p = projetos[idxAtual];
+    let totalAcumulado = p.historico.reduce((s, v) => s + v, 0);
+    let ativas = p.despesas.filter(d => (totalAcumulado * d.porcentagem) < (d.valor - 0.01));
+    if (ativas.length > 0) {
+        let fatia = 1 / ativas.length;
+        p.despesas.forEach(d => {
+            if (ativas.find(a => a.id === d.id)) d.porcentagem = fatia;
+            else if ((totalAcumulado * d.porcentagem) < d.valor) d.porcentagem = 0; 
+        });
+    }
+    salvar(); atualizarTudo();
+}
+
+function priorizarBolaDeNeve() {
+    backupAcao();
+    let p = projetos[idxAtual];
+    let totalGeral = p.historico.reduce((s, v) => s + v, 0);
+    let ativas = p.despesas.filter(d => (totalGeral * d.porcentagem) < (d.valor - 0.01));
+    if (ativas.length === 0) return;
+    ativas.sort((a, b) => (a.valor - (totalGeral * a.porcentagem)) - (b.valor - (totalGeral * b.porcentagem)));
+    
+    ativas.forEach((d, i) => {
+        if (i === 0) d.porcentagem = 0.70;
+        else if (i === 1) d.porcentagem = 0.20;
+        else d.porcentagem = 0.10 / (ativas.length - 2 || 1);
+    });
+    salvar(); atualizarTudo();
+}
+
+function backupAcao() { backupContas = JSON.parse(JSON.stringify(projetos[idxAtual].despesas)); }
+function desfazerAlteracaoEstrutura() { if(backupContas){ projetos[idxAtual].despesas = backupContas; backupContas = null; salvar(); atualizarTudo(); } }
+function desfazerUltimoGanho() { if(confirm("Remover último registro?")){ projetos[idxAtual].historico.pop(); salvar(); atualizarTudo(); } }
+function reabrirConta(id) { backupAcao(); projetos[idxAtual].despesas.find(x => x.id === id).porcentagem = 0; redistribuirAtivas(); }
+function removerDespesa(id) { backupAcao(); projetos[idxAtual].despesas = projetos[idxAtual].despesas.filter(d => d.id !== id); redistribuirAtivas(); }
+function renderHistorico(hist) { historicoDisplay.innerHTML = hist.slice().reverse().map((v, i) => `<div>Dia ${hist.length - i}: + R$ ${v.toFixed(2)}</div>`).join(''); }
+function excluirProjetoAtual() { if(confirm("Excluir projeto?")){ projetos.splice(idxAtual, 1); salvar(); voltar(); } }
+
+renderHome();
 </script>
-
 </body>
 </html>
