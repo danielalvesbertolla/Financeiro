@@ -1,11 +1,11 @@
 # Financeiro
 Metas Financeiras
 
-<Bom Trabalho>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX</title>
+<title>Meta Financeira PRO MAX+++</title>
 <style>
 body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; }
@@ -19,7 +19,7 @@ input { padding:8px; margin:5px; border-radius:8px; border:none; }
 </head>
 <body>
 
-<h1>📊 Metas Financeiras PRO MAX</h1>
+<h1>📊 Metas Financeiras PRO MAX+++</h1>
 
 <div id="home" class="card">
   <h3>Suas Metas</h3>
@@ -37,20 +37,29 @@ input { padding:8px; margin:5px; border-radius:8px; border:none; }
     <button onclick="voltar()">⬅ Voltar</button>
     <button class="red" onclick="resetarMeta()">Resetar</button>
     <button class="red" onclick="excluirMeta()">Excluir</button>
+    <button class="blue" onclick="desfazer()">↩ Desfazer</button>
 
     <h2 id="tituloMeta"></h2>
+    <p id="diaAtual"></p>
+    <p id="valorDevia"></p>
+    <p id="valorAtual"></p>
     <p id="restante"></p>
     <p id="diaria"></p>
     <p id="percentual"></p>
 
-    <input id="ganho" type="number">
+    <input id="ganhoInput" type="number">
     <button class="green" onclick="registrar()">Registrar ganho</button>
 
     <p class="alert" id="alerta"></p>
   </div>
 
   <div class="card">
-    <h3>Distribuição para Contas</h3>
+    <h3>Distribuição do dia</h3>
+    <div id="distribuicaoDia"></div>
+  </div>
+
+  <div class="card">
+    <h3>Contas</h3>
     Nome: <input id="nomeDespesa">
     Valor: <input id="valorDespesa" type="number">
     <button class="blue" onclick="addDespesa()">Adicionar</button>
@@ -66,33 +75,26 @@ input { padding:8px; margin:5px; border-radius:8px; border:none; }
 <script>
 let metas = JSON.parse(localStorage.getItem('metas')) || [];
 let metaAtual = null;
+let historicoBackup = [];
 
-function salvar(){
-  localStorage.setItem('metas', JSON.stringify(metas));
-}
+function salvar(){ localStorage.setItem('metas', JSON.stringify(metas)); }
 
 function renderMetas(){
   let html='';
   metas.forEach((m,i)=>{
-    html += `<div>
-      ${m.nome} - R$ ${m.meta}
-      <button class='blue' onclick='abrirMeta(${i})'>Abrir</button>
-    </div>`;
+    html += `<div>${m.nome} - R$ ${m.meta}
+    <button class='blue' onclick='abrirMeta(${i})'>Abrir</button></div>`;
   });
   document.getElementById('listaMetas').innerHTML = html;
 }
 
 function criarMeta(){
-  let nome = document.getElementById('nomeMeta').value;
-  let valor = Number(document.getElementById('valorMeta').value);
-  let dias = Number(document.getElementById('diasMeta').value);
+  let nome = nomeMeta.value;
+  let valor = Number(valorMeta.value);
+  let dias = Number(diasMeta.value);
 
   metas.push({
-    nome,
-    meta:valor,
-    dias,
-    restante:valor,
-    historico:[],
+    nome, meta:valor, diasTotal:dias, historico:[],
     despesas:[
       {nome:'Aluguel', valor:1400},
       {nome:'Internet', valor:100},
@@ -100,125 +102,129 @@ function criarMeta(){
     ]
   });
 
-  salvar();
-  renderMetas();
+  salvar(); renderMetas();
 }
 
 function abrirMeta(i){
-  metaAtual = i;
-  document.getElementById('home').style.display='none';
-  document.getElementById('metaPage').style.display='block';
+  metaAtual=i;
+  home.style.display='none';
+  metaPage.style.display='block';
   atualizar();
 }
 
-function voltar(){
-  document.getElementById('home').style.display='block';
-  document.getElementById('metaPage').style.display='none';
-  renderMetas();
-}
+function voltar(){ home.style.display='block'; metaPage.style.display='none'; renderMetas(); }
+
+function totalGanho(m){ return m.historico.reduce((s,v)=>s+v,0); }
 
 function atualizar(){
   let m = metas[metaAtual];
 
-  let diaria = m.restante / m.dias;
-  let progresso = ((m.meta - m.restante)/m.meta)*100;
+  let ganho = totalGanho(m);
+  let dia = m.historico.length;
+  let restante = m.meta - ganho;
+  let diasRestantes = m.diasTotal - dia;
+  let diaria = restante / (diasRestantes || 1);
+  let progresso = (ganho/m.meta)*100;
 
-  document.getElementById('tituloMeta').innerText = m.nome;
-  document.getElementById('restante').innerText = `Falta: R$ ${m.restante.toFixed(2)}`;
-  document.getElementById('diaria').innerText = `Meta diária: R$ ${diaria.toFixed(2)}`;
-  document.getElementById('percentual').innerText = `Progresso: ${progresso.toFixed(1)}%`;
+  let deveria = (m.meta/m.diasTotal)*dia;
 
-  if(diaria > 400){
-    document.getElementById('alerta').innerText = `⚠️ Você está atrasado!`;
-  } else {
-    document.getElementById('alerta').innerText = `🔥 Bom ritmo!`;
-  }
+  tituloMeta.innerText = m.nome;
+  diaAtual.innerText = `📅 Dia ${dia} de ${m.diasTotal}`;
+  valorDevia.innerText = `📌 Deveria ter: R$ ${deveria.toFixed(2)}`;
+  valorAtual.innerText = `💰 Você tem: R$ ${ganho.toFixed(2)}`;
+  restante.innerText = `❗ Falta: R$ ${restante.toFixed(2)}`;
+  diaria.innerText = `Meta diária: R$ ${diaria.toFixed(2)}`;
+  percentual.innerText = `Progresso: ${progresso.toFixed(1)}%`;
 
-  let hist='';
-  m.historico.forEach((v,i)=>{
-    hist += `<div>Dia ${i+1}: R$ ${v.toFixed(2)}</div>`;
-  });
-  document.getElementById('historico').innerHTML = hist;
+  alerta.innerText = ganho < deveria ? '⚠️ Abaixo do esperado' : '🔥 No ritmo';
 
+  renderHistorico();
   renderDespesas();
+  renderDistribuicaoDia(diaria);
 }
 
 function registrar(){
-  let ganho = Number(document.getElementById('ganho').value);
   let m = metas[metaAtual];
+  historicoBackup = [...m.historico];
 
-  let dizimo = ganho * 0.10;
-  ganho -= dizimo;
+  let ganho = Number(ganhoInput.value);
+  let liquido = ganho * 0.9;
 
-  m.restante -= ganho;
-  m.dias--;
-  m.historico.push(ganho);
+  m.historico.push(liquido);
 
-  salvar();
-  atualizar();
+  salvar(); atualizar();
 }
 
-function resetarMeta(){
+function editarDia(i,val){
   let m = metas[metaAtual];
-  m.restante = m.meta;
-  m.historico = [];
-  salvar();
-  atualizar();
+  historicoBackup = [...m.historico];
+  m.historico[i] = val*0.9;
+  salvar(); atualizar();
 }
 
-function excluirMeta(){
-  metas.splice(metaAtual,1);
-  salvar();
-  voltar();
+function apagarDia(i){
+  let m = metas[metaAtual];
+  historicoBackup = [...m.historico];
+  m.historico.splice(i,1);
+  salvar(); atualizar();
+}
+
+function desfazer(){ metas[metaAtual].historico=[...historicoBackup]; salvar(); atualizar(); }
+
+function renderHistorico(){
+  let m = metas[metaAtual];
+  let html='';
+  m.historico.forEach((v,i)=>{
+    html+=`Dia ${i+1}: 
+    <input type='number' value='${v.toFixed(2)}' onchange='editarDia(${i},this.value)'>
+    <button class='red' onclick='apagarDia(${i})'>🗑</button><br>`;
+  });
+  historico.innerHTML=html;
 }
 
 function addDespesa(){
-  let nome = document.getElementById('nomeDespesa').value;
-  let valor = Number(document.getElementById('valorDespesa').value);
-
-  metas[metaAtual].despesas.push({nome, valor});
-  salvar();
-  renderDespesas();
+  metas[metaAtual].despesas.push({nome:nomeDespesa.value, valor:Number(valorDespesa.value)});
+  salvar(); renderDespesas();
 }
 
-function removerDespesa(index){
-  metas[metaAtual].despesas.splice(index,1);
-  salvar();
-  renderDespesas();
-}
+function removerDespesa(i){ metas[metaAtual].despesas.splice(i,1); salvar(); renderDespesas(); }
 
 function renderDespesas(){
   let m = metas[metaAtual];
   let total = m.despesas.reduce((s,d)=>s+d.valor,0);
-  let ganhoTotal = m.meta - m.restante;
-
-  let prioridade = null;
-  let maiorFalta = 0;
+  let ganho = totalGanho(m);
 
   let html='';
-
   m.despesas.forEach((d,i)=>{
-    let perc = (d.valor/total)*100;
-    let alocado = ganhoTotal * (perc/100);
+    let perc = d.valor/total;
+    let alocado = ganho*perc;
     let falta = d.valor - alocado;
 
-    if(falta > maiorFalta){
-      maiorFalta = falta;
-      prioridade = d.nome;
-    }
-
-    html += `<div>
-      ${d.nome}: R$ ${d.valor} (${perc.toFixed(1)}%)<br>
-      👉 Alocado: R$ ${alocado.toFixed(2)}<br>
-      ❗ Falta: R$ ${falta.toFixed(2)}
-      <button class='red' onclick='removerDespesa(${i})'>X</button>
-    </div><br>`;
+    html+=`${d.nome}: R$${d.valor} (${(perc*100).toFixed(1)}%)<br>
+    👉 Alocado: R$${alocado.toFixed(2)}<br>
+    ❗ Falta: R$${falta.toFixed(2)}
+    <button onclick='removerDespesa(${i})'>X</button><br><br>`;
   });
 
-  html += `<p><strong>💡 Prioridade agora: ${prioridade || '-'} </strong></p>`;
-
-  document.getElementById('listaDespesas').innerHTML = html;
+  listaDespesas.innerHTML=html;
 }
+
+function renderDistribuicaoDia(diaria){
+  let m = metas[metaAtual];
+  let total = m.despesas.reduce((s,d)=>s+d.valor,0);
+
+  let html='';
+  m.despesas.forEach(d=>{
+    let perc = d.valor/total;
+    let hoje = diaria * perc;
+    html+=`${d.nome}: 👉 Hoje separar R$ ${hoje.toFixed(2)}<br>`;
+  });
+
+  distribuicaoDia.innerHTML = html;
+}
+
+function resetarMeta(){ metas[metaAtual].historico=[]; salvar(); atualizar(); }
+function excluirMeta(){ metas.splice(metaAtual,1); salvar(); voltar(); }
 
 renderMetas();
 </script>
