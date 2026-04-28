@@ -20,7 +20,7 @@
 <body>
 
 <div id="homePage">
-    <h1>📊 Meus Projetos</h1>
+    <h1>📊 Meta Financeira PRO</h1>
     <div class="card">
         <div id="listaMetas"></div>
         <hr style="border-top: 1px solid #334155; margin: 20px 0;">
