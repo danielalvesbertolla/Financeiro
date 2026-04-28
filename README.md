@@ -1,7 +1,8 @@
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX - Quitação Inteligente</title>
+<title>Meta Financeira PRO MAX - Inteligência de Porcentagem</title>
 <style>
 body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.5; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; }
@@ -11,7 +12,6 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
 .green { background:#22c55e; }
 .red { background:#ef4444; }
 .blue { background:#3b82f6; }
-.orange { background:#f97316; }
 .alert { margin-top:10px; font-weight:bold; padding: 10px; border-radius: 8px; }
 .despesa-item { border-bottom: 1px solid #334155; padding: 10px 0; }
 .manual-badge { background: #3b82f6; font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-left: 5px; }
@@ -41,7 +41,14 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
 
     <h2 id="tituloMeta"></h2>
 
-    <div id="infoEstatisticas">
+    <div style="background: #0f172a; padding: 15px; border-radius: 8px;">
+        <h3>✏️ Editar Meta</h3>
+        Valor: <input id="editarValor" type="number">
+        Dias: <input id="editarDias" type="number">
+        <button class="blue" onclick="salvarEdicaoMeta()">Salvar</button>
+    </div>
+
+    <div id="infoEstatisticas" style="margin-top:20px;">
         <p id="diaAtual"></p>
         <p id="percentual"></p>
         <p id="valorAtual" style="font-size: 1.2em; font-weight: bold;"></p>
@@ -61,13 +68,8 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
   </div>
 
   <div class="card">
-    <h3>📋 Contas e Distribuição</h3>
-    
-    <div style="margin-bottom:20px; background: #0f172a; padding: 10px; border-radius: 8px;">
-        <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação (Menores Valores)</button>
-        <p style="margin: 5px 0 0 0;"><small>Isso focará 70% do seu ganho nas contas mais fáceis de quitar hoje.</small></p>
-    </div>
-
+    <h3>📋 Contas e Distribuição Automática</h3>
+    <p><small>Ajuste uma % e o sistema redistribuirá o restante sozinho.</small></p>
     <div style="margin-bottom:20px;">
       Nome: <input id="nomeDespesa" style="width:120px">
       Valor: <input id="valorDespesa" type="number">
@@ -115,7 +117,21 @@ function abrirMeta(i){
   metaAtual=i;
   home.style.display='none';
   metaPage.style.display='block';
+  carregarEdicao();
   atualizar();
+}
+
+function carregarEdicao(){
+  let m = metas[metaAtual];
+  editarValor.value = m.meta;
+  editarDias.value = m.diasTotal;
+}
+
+function salvarEdicaoMeta(){
+  let m = metas[metaAtual];
+  m.meta = Number(editarValor.value);
+  m.diasTotal = Number(editarDias.value);
+  salvar(); atualizar();
 }
 
 function voltar(){ home.style.display='block'; metaPage.style.display='none'; renderMetas(); }
@@ -179,70 +195,53 @@ function addDespesa(){
   metas[metaAtual].despesas.push({
     nome: nomeDespesa.value,
     valor: Number(valorDespesa.value),
-    porcentagem: 0,
+    porcentagem: null,
     manual: false
   });
   nomeDespesa.value = ''; valorDespesa.value = '';
-  recalcularEquitativo();
-}
-
-function recalcularEquitativo(){
-  let m = metas[metaAtual];
-  if(m.despesas.length === 0) return;
-  let fatia = 1 / m.despesas.length;
-  m.despesas.forEach(d => { d.porcentagem = fatia; d.manual = false; });
-  salvar(); atualizar();
+  recalcularPorcentagens();
 }
 
 function atualizarPorcentagemManual(i, val){
   let m = metas[metaAtual];
   let novaPerc = Number(val) / 100;
+  
+  if(novaPerc > 1) novaPerc = 1;
+  if(novaPerc < 0) novaPerc = 0;
+
   m.despesas[i].porcentagem = novaPerc;
-  m.despesas[i].manual = true;
+  m.despesas[i].manual = true; // Marca que o usuário definiu esta
   
-  let ocupadoManual = m.despesas.reduce((s, d) => s + (d.manual ? d.porcentagem : 0), 0);
+  recalcularPorcentagens();
+}
+
+function recalcularPorcentagens(){
+  let m = metas[metaAtual];
+  let despesas = m.despesas;
+  
+  // Soma quanto já foi ocupado pelas definições manuais
+  let ocupadoManual = despesas.reduce((s, d) => s + (d.manual ? d.porcentagem : 0), 0);
+  
+  // Se passou de 100%, reduz proporcionalmente as outras (ou trava)
+  if(ocupadoManual > 1) {
+      alert("Atenção: A soma das porcentagens excedeu 100%!");
+  }
+
   let restante = Math.max(0, 1 - ocupadoManual);
-  let automaticas = m.despesas.filter(d => !d.manual);
+  let automaticas = despesas.filter(d => !d.manual);
   
+  // Divide o que sobrou igualmente entre as que não são manuais
   if(automaticas.length > 0) {
       let fatia = restante / automaticas.length;
       automaticas.forEach(d => d.porcentagem = fatia);
   }
+
   salvar(); atualizar();
-}
-
-function priorizarQuitacao(){
-    let m = metas[metaAtual];
-    let ganhoTotal = totalGanho(m);
-    
-    if(m.despesas.length === 0) return;
-
-    // 1. Calcular quanto falta para cada uma
-    m.despesas.forEach(d => {
-        d.faltaReal = d.valor - (ganhoTotal * d.porcentagem);
-        d.manual = false; // Resetamos o manual para priorizar o algoritmo
-    });
-
-    // 2. Ordenar por quem falta menos (mais fácil de pagar)
-    let ordenadas = [...m.despesas].sort((a, b) => a.faltaReal - b.faltaReal);
-
-    // 3. Distribuição agressiva (Snowball Method)
-    // A primeira (mais fácil) ganha 60%, a segunda 25%, a terceira 10%, o resto divide 5%
-    ordenadas.forEach((d, index) => {
-        let originalIdx = m.despesas.indexOf(d);
-        if(index === 0) m.despesas[originalIdx].porcentagem = 0.60;
-        else if(index === 1) m.despesas[originalIdx].porcentagem = 0.25;
-        else if(index === 2) m.despesas[originalIdx].porcentagem = 0.10;
-        else m.despesas[originalIdx].porcentagem = 0.05 / (ordenadas.length - 3);
-    });
-
-    salvar();
-    atualizar();
 }
 
 function removerDespesa(i){ 
   metas[metaAtual].despesas.splice(i,1); 
-  recalcularEquitativo(); 
+  recalcularPorcentagens(); 
 }
 
 function renderDespesas(diaria, ganhoTotal){
@@ -252,22 +251,14 @@ function renderDespesas(diaria, ganhoTotal){
   m.despesas.forEach((d, i)=>{
     let alocado = ganhoTotal * d.porcentagem;
     let hoje = diaria * d.porcentagem;
-    let faltaParaQuitar = d.valor - alocado;
 
     html+=`
-    <div class="despesa-item" style="${faltaParaQuitar <= 0 ? 'opacity: 0.5; background: #064e3b;' : ''}">
+    <div class="despesa-item">
       <b>${d.nome}</b> ${d.manual ? '<span class="manual-badge">MANUAL</span>' : ''}
       <br>
-      Meta Total: R$ ${d.valor.toFixed(2)} | <span style="color: #fbbf24">% Atual: ${(d.porcentagem*100).toFixed(1)}%</span>
+      Ajustar %: <input type='number' step="1" value='${(d.porcentagem*100).toFixed(1)}' onchange='atualizarPorcentagemManual(${i},this.value)'>
       <br>
-      Ajustar %: <input type='number' value='${(d.porcentagem*100).toFixed(1)}' onchange='atualizarPorcentagemManual(${i},this.value)'>
-      <br>
-      <small>💰 Já Acumulado: R$ ${alocado.toFixed(2)}</small><br>
-      <small style="color: ${faltaParaQuitar <= 0 ? '#22c55e' : '#ef4444'}">
-        ${faltaParaQuitar <= 0 ? '✅ QUITADA!' : '❗ Falta: R$ ' + faltaParaQuitar.toFixed(2)}
-      </small>
-      <br>
-      <small>🎯 Separar do ganho de hoje: <b>R$ ${hoje.toFixed(2)}</b></small>
+      <small>💰 Acumulado: R$ ${alocado.toFixed(2)} | 🎯 Separar Hoje: R$ ${hoje.toFixed(2)}</small>
       <button class='red' style="float:right" onclick='removerDespesa(${i})'>X</button>
     </div>`;
   });
