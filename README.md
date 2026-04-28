@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX - Full Edition</title>
+<title>Meta Financeira PRO MAX - Fix Prioridade</title>
 <style>
 body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.5; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; }
@@ -63,11 +63,11 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
   </div>
 
   <div class="card">
-    <h3>📋 Contas e Distribuição (Ordenado por Prioridade)</h3>
+    <h3>📋 Contas e Distribuição</h3>
     
-    <div style="margin-bottom:20px; background: #0f172a; padding: 10px; border-radius: 8px;">
-        <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação (Menores Valores)</button>
-        <p style="margin: 5px 0 0 0;"><small>Foca o esforço nas contas mais próximas de acabar.</small></p>
+    <div style="margin-bottom:20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #f97316;">
+        <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação (Bola de Neve)</button>
+        <p style="margin: 5px 0 0 0;"><small>Este botão analisa o que <b>falta pagar</b> e foca o dinheiro nas contas que estão quase acabando.</small></p>
     </div>
 
     <div style="margin-bottom:20px;">
@@ -220,22 +220,33 @@ function atualizarPorcentagemManual(id, val){
 function priorizarQuitacao(){
     let m = metas[metaAtual];
     let ganhoTotal = totalGanho(m);
-    if(m.despesas.length === 0) return;
+    
+    // Filtramos apenas as despesas que ainda não foram totalmente quitadas
+    let despesasAtivas = m.despesas.filter(d => (d.valor - (ganhoTotal * d.porcentagem)) > 0);
+    
+    if(despesasAtivas.length === 0) return;
 
-    m.despesas.forEach(d => {
-        let alocado = ganhoTotal * d.porcentagem;
-        d.faltaReal = d.valor - alocado;
-        d.manual = false;
+    // Calculamos exatamente o valor que falta para cada uma
+    despesasAtivas.forEach(d => {
+        d.faltaReal = d.valor - (ganhoTotal * d.porcentagem);
+        d.manual = false; // Tiramos do manual para o algoritmo agir
     });
 
-    let ordenadas = [...m.despesas].sort((a, b) => a.faltaReal - b.faltaReal);
+    // Ordenamos: a que falta MENOS dinheiro fica primeiro
+    despesasAtivas.sort((a, b) => a.faltaReal - b.faltaReal);
 
-    ordenadas.forEach((d, index) => {
-        let realD = m.despesas.find(x => x.id === d.id);
-        if(index === 0) realD.porcentagem = 0.60;
-        else if(index === 1) realD.porcentagem = 0.25;
-        else if(index === 2) realD.porcentagem = 0.10;
-        else realD.porcentagem = 0.05 / (ordenadas.length - 3 || 1);
+    // Distribuímos as porcentagens (Ex: 1ª recebe mais, 2ª menos...)
+    // Se você tiver 3 contas, a 1ª recebe 60%, a 2ª 30% e a 3ª 10%
+    let pesos = [0.60, 0.25, 0.10, 0.05];
+    let somaRestante = 0;
+
+    m.despesas.forEach(d => {
+        let rank = despesasAtivas.indexOf(d);
+        if(rank !== -1) {
+            d.porcentagem = pesos[rank] || (0.05 / (despesasAtivas.length - 3 || 1));
+        } else {
+            d.porcentagem = 0; // Se já quitou, a prioridade vira zero
+        }
     });
 
     salvar(); atualizar();
@@ -250,6 +261,8 @@ function removerDespesa(id){
 function renderDespesas(diaria, ganhoTotal){
   let m = metas[metaAtual];
   let html='';
+  
+  // Ordenação visual: por maior prioridade (%) no topo
   let exibicao = [...m.despesas].sort((a, b) => b.porcentagem - a.porcentagem);
 
   exibicao.forEach((d)=>{
@@ -259,18 +272,18 @@ function renderDespesas(diaria, ganhoTotal){
 
     html+=`
     <div class="despesa-item" style="${faltaParaQuitar <= 0 ? 'opacity: 0.5; background: #064e3b;' : ''}">
-      <b>${d.nome}</b> ${d.manual ? '<span class="manual-badge">MANUAL</span>' : ''}
+      <b style="font-size: 1.1em">${d.nome}</b> ${d.manual ? '<span class="manual-badge">MANUAL</span>' : ''}
       <br>
       Meta Total: R$ ${d.valor.toFixed(2)} | <span style="color: #fbbf24; font-weight:bold;">Prioridade: ${(d.porcentagem*100).toFixed(1)}%</span>
       <br>
       Ajustar %: <input type='number' value='${(d.porcentagem*100).toFixed(1)}' onchange='atualizarPorcentagemManual(${d.id},this.value)'>
       <br>
-      <small>💰 Já Acumulado: R$ ${alocado.toFixed(2)}</small><br>
-      <small style="color: ${faltaParaQuitar <= 0 ? '#22c55e' : '#ef4444'}">
-        ${faltaParaQuitar <= 0 ? '✅ QUITADA!' : '❗ Falta: R$ ' + faltaParaQuitar.toFixed(2)}
+      <small>💰 Já acumulado nesta conta: R$ ${alocado.toFixed(2)}</small><br>
+      <small style="color: ${faltaParaQuitar <= 0 ? '#22c55e' : '#ef4444'}; font-weight: bold;">
+        ${faltaParaQuitar <= 0 ? '✅ QUITADA!' : '❗ Falta pagar: R$ ' + faltaParaQuitar.toFixed(2)}
       </small>
       <br>
-      <small>🎯 Separar hoje: <b style="font-size:1.1em;">R$ ${hoje.toFixed(2)}</b></small>
+      <small>🎯 Separar hoje: <b style="font-size:1.1em; color: #fff;">R$ ${hoje.toFixed(2)}</b></small>
       <button class='red' style="float:right" onclick='removerDespesa(${d.id})'>X</button>
     </div>`;
   });
