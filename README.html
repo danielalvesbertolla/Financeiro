@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX - Prioridade Inteligente</title>
+<title>Meta Financeira PRO MAX - Full Edition</title>
 <style>
 body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.5; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; }
@@ -50,6 +50,7 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
         <hr>
         <p id="diaria" style="color: #22c55e; font-weight: bold;"></p>
         <p id="proximoDia"></p>
+        <p id="dizimoInfo" style="color: #fbbf24; font-weight: bold;"></p>
     </div>
 
     <div class="alert" id="alerta"></div>
@@ -66,7 +67,7 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
     
     <div style="margin-bottom:20px; background: #0f172a; padding: 10px; border-radius: 8px;">
         <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação (Menores Valores)</button>
-        <p style="margin: 5px 0 0 0;"><small>Reordena as contas: as que recebem mais hoje ficam no topo.</small></p>
+        <p style="margin: 5px 0 0 0;"><small>Foca o esforço nas contas mais próximas de acabar.</small></p>
     </div>
 
     <div style="margin-bottom:20px;">
@@ -143,6 +144,7 @@ function atualizar(){
   
   diaria.innerText = `Meta diária (LÍQUIDA): R$ ${diariaLiquida.toFixed(2)}`;
   proximoDia.innerText = `👉 Próximo Bruto sugerido: R$ ${diariaBruta.toFixed(2)}`;
+  dizimoInfo.innerText = `🙏 Dízimo sugerido (10%): R$ ${(diariaBruta * 0.1).toFixed(2)}`;
 
   alerta.innerText = ganho < deveria ? '⚠️ Abaixo do esperado' : '🔥 No ritmo!';
   alerta.className = 'alert ' + (ganho < deveria ? 'red' : 'green');
@@ -182,7 +184,7 @@ function addDespesa(){
     valor: Number(valorDespesa.value),
     porcentagem: 0,
     manual: false,
-    id: Date.now() // ID único para manter referência após sorteio
+    id: Date.now()
   });
   nomeDespesa.value = ''; valorDespesa.value = '';
   recalcularEquitativo();
@@ -248,9 +250,6 @@ function removerDespesa(id){
 function renderDespesas(diaria, ganhoTotal){
   let m = metas[metaAtual];
   let html='';
-  
-  // Criamos uma cópia para ordenar sem bagunçar o array original se preferir, 
-  // mas aqui ordenaremos para o usuário ver a prioridade real no topo.
   let exibicao = [...m.despesas].sort((a, b) => b.porcentagem - a.porcentagem);
 
   exibicao.forEach((d)=>{
