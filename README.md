@@ -3,110 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financeiro Master - Versão 3.0</title>
+    <title>Financeiro Master PRO - Tudo em Um</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --border: #334155; --green: #22c55e; --red: #ef4444; --blue: #3b82f6; --orange: #f59e0b; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; }
-        .container { max-width: 650px; margin: auto; padding-bottom: 30px; }
-        .card { background: var(--card); padding: 18px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        button { padding: 10px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; margin: 2px; }
-        button:hover { filter: brightness(1.2); }
-        input { padding: 10px; border-radius: 8px; border: none; background: #0f172a; color: white; margin: 5px 0; border: 1px solid var(--border); }
+        .container { max-width: 800px; margin: auto; padding-bottom: 50px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        h1, h2, h3 { margin-top: 0; color: #f8fafc; }
+        button { padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; margin: 4px 2px; }
+        button:hover { filter: brightness(1.2); transform: translateY(-1px); }
+        input { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: white; margin: 5px 0; }
         .green { background: var(--green); } .red { background: var(--red); } .blue { background: var(--blue); } .orange { background: var(--orange); } .gray { background: #64748b; }
         
-        .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 5px 0; }
-        .nav-tabs button { flex: 1; opacity: 0.6; }
-        .nav-tabs button.active { opacity: 1; border-bottom: 3px solid white; background: var(--card); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* Dashboard Layout */
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
 
-        .finance-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid var(--blue); margin: 15px 0; }
-        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border); }
-        .item-edit { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--border); }
-        .quitada-item { background: #064e3b; border-left: 6px solid var(--green); padding: 10px; border-radius: 8px; margin-bottom: 8px; }
-        .alert { padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin: 10px 0; }
+        .finance-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid var(--blue); margin-bottom: 15px; }
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+        .row:last-child { border-bottom: none; font-size: 1.2em; font-weight: bold; }
+
+        .item-edit { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .quitada-item { background: #064e3b; border-left: 6px solid var(--green); padding: 12px; border-radius: 8px; margin-bottom: 8px; opacity: 0.9; }
+        
+        .section-title { border-left: 4px solid var(--blue); padding-left: 10px; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="homePage">
+    
+    <div id="projectSelector" class="card">
         <h1>📊 Meus Projetos</h1>
-        <div class="card">
-            <div id="listaProjetos"></div>
-            <hr style="border-top: 1px solid var(--border); margin: 20px 0;">
-            <input id="p_nome" placeholder="Nome do Projeto" style="width: 100%; box-sizing: border-box;">
-            <input id="p_dias" type="number" placeholder="Total de Dias" style="width: 100%; box-sizing: border-box;">
-            <button class="green" onclick="criarProjeto()" style="width: 100%; margin-top: 10px;">Criar Projeto</button>
+        <div id="listaProjetos"></div>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input id="p_nome" placeholder="Nome do Projeto (Ex: Maio 2026)" style="flex: 2;">
+            <input id="p_dias" type="number" placeholder="Dias" style="flex: 0.5;">
+            <button class="green" onclick="criarProjeto()" style="flex: 1;">Criar Novo</button>
         </div>
     </div>
 
-    <div id="projetoPage" style="display:none;">
-        <div class="nav-tabs">
-            <button id="t1" class="active" onclick="switchTab(1)">Painel</button>
-            <button id="t2" onclick="switchTab(2)">Editar/Prioridade</button>
-            <button id="t3" onclick="switchTab(3)">Histórico</button>
-            <button class="red" onclick="voltar()" style="flex:0.3">✖</button>
+    <div id="mainDashboard" style="display: none;">
+        
+        <div class="section-title">
+            <h2 id="displayNome" style="margin:0"></h2>
+            <button class="gray" onclick="fecharProjeto()">Voltar à Lista</button>
         </div>
 
-        <div id="tab1" class="tab-content active">
-            <div class="card">
-                <h2 id="displayNome"></h2>
-                <div class="finance-box">
-                    <div class="row"><span>🎯 Meta Total (Soma das Contas):</span> <span id="metaTotalDisplay"></span></div>
-                    <div class="row"><span>⛽ Combustível Diário:</span> <span>R$ 75,00</span></div>
-                    <div class="row"><span>🙏 Dízimo Previsto:</span> <span id="metaDizimo" style="color:var(--orange)"></span></div>
-                    <div class="row" style="font-size:1.2em; border:none;"><span>🚀 BRUTO NECESSÁRIO HOJE:</span> <span id="metaBruta" style="color:var(--blue)"></span></div>
+        <div class="grid-layout">
+            <div>
+                <div class="card">
+                    <h3>🚀 Painel de Metas</h3>
+                    <div class="finance-box">
+                        <div class="row"><span>🎯 Meta Total (Dívidas):</span> <span id="metaTotalDisplay"></span></div>
+                        <div class="row"><span>⛽ Combustível:</span> <span>R$ 75,00</span></div>
+                        <div class="row"><span>🙏 Dízimo Previsto (10%):</span> <span id="metaDizimo" style="color:var(--orange)"></span></div>
+                        <div class="row"><span>💰 BRUTO NECESSÁRIO HOJE:</span> <span id="metaBruta" style="color:var(--blue)"></span></div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid var(--border);">
+                        <strong>Registrar Ganho Bruto REAL:</strong>
+                        <input id="inputBruto" type="number" placeholder="R$ 0,00" style="width: 100%; box-sizing: border-box; font-size: 1.2em;">
+                        <button class="green" onclick="registrarGanho()" style="width: 100%; margin-top: 10px;">Confirmar Entrada</button>
+                    </div>
                 </div>
 
-                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
-                    <strong>Registrar Ganho Bruto:</strong><br>
-                    <input id="inputBruto" type="number" placeholder="R$ 0,00" style="width: 100%; box-sizing: border-box;">
-                    <button class="green" onclick="registrarGanho()" style="width: 100%; margin-top: 10px;">Confirmar Entrada</button>
+                <div class="card">
+                    <h3>📜 Histórico Recente</h3>
+                    <div id="listaHistorico"></div>
                 </div>
             </div>
-            <div class="card">
-                <h3>💰 Divisão de Hoje</h3>
-                <div id="divisaoHoje"></div>
+
+            <div>
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin:0">⚙️ Gerenciar Contas</h3>
+                        <button class="blue" onclick="desfazer()" style="font-size: 12px; padding: 5px 10px;">↩ Desfazer</button>
+                    </div>
+                    
+                    <div style="display:flex; gap:5px; margin-bottom: 15px;">
+                        <button class="orange" onclick="bolaDeNeve()" style="flex:1; font-size: 13px;">🚀 Bola de Neve (Priorizar Menores)</button>
+                    </div>
+
+                    <div id="editorContas"></div>
+                    
+                    <hr style="border: 0; border-top: 1px solid var(--border); margin: 15px 0;">
+                    <h4>Nova Conta</h4>
+                    <div style="display:flex; gap:5px;">
+                        <input id="c_nome" placeholder="Nome" style="flex:2;">
+                        <input id="c_valor" type="number" placeholder="R$" style="flex:1;">
+                        <button class="blue" onclick="addConta()">+</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>💰 Divisão do Líquido de Hoje</h3>
+                    <div id="divisaoHoje"></div>
+                </div>
             </div>
         </div>
 
-        <div id="tab2" class="tab-content">
-            <div class="card">
-                <div style="display:flex; justify-content: space-between;">
-                    <button class="orange" onclick="bolaDeNeve()">🚀 Bola de Neve (Menor Valor)</button>
-                    <button class="blue" onclick="desfazer()">↩ Desfazer Alterações</button>
-                </div>
-                <p><small>* Alterar uma % redistribui o restante automaticamente.</small></p>
-                <div id="editorContas"></div>
-                <hr style="border-top: 1px solid var(--border); margin: 15px 0;">
-                <input id="c_nome" placeholder="Nova Conta" style="width: 45%;">
-                <input id="c_valor" type="number" placeholder="Valor R$" style="width: 45%;">
-                <button class="blue" onclick="addConta()" style="width: 100%;">Adicionar Conta</button>
-            </div>
-            <div class="card">
-                <h3>✅ Contas Quitadas</h3>
-                <div id="listaQuitadas"></div>
-            </div>
+        <div class="card">
+            <h3>✅ Contas Quitadas (Fora da Divisão)</h3>
+            <div id="listaQuitadas"></div>
         </div>
 
-        <div id="tab3" class="tab-content">
-            <div class="card">
-                <h3>📜 Histórico</h3>
-                <div id="listaHistorico"></div>
-            </div>
-            <button class="red" onclick="excluirProjetoTotal()" style="width:100%; opacity:0.5;">Excluir Projeto</button>
-        </div>
+        <button class="red" onclick="excluirProjetoTotal()" style="width: 100%; opacity: 0.4; margin-top: 20px;">🗑 Excluir Projeto Inteiro</button>
     </div>
 </div>
 
 <script>
-let dados = JSON.parse(localStorage.getItem('financas_v3_final')) || [];
+let dados = JSON.parse(localStorage.getItem('financas_final_v5')) || [];
 let atual = null;
 let bkpEstrutura = null;
 const GASOLINA = 75;
 
-function salvar() { localStorage.setItem('financas_v3_final', JSON.stringify(dados)); }
+function salvar() { localStorage.setItem('financas_final_v5', JSON.stringify(dados)); }
+
+// --- GERENCIAMENTO DE PROJETOS ---
+function renderHome() {
+    let h = '';
+    dados.forEach((p, i) => {
+        let metaTotal = p.contas.reduce((s, c) => s + c.valor, 0);
+        h += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span><b>${p.nome}</b><br><small>Total: R$ ${metaTotal.toFixed(2)}</small></span>
+            <button class="blue" onclick="abrirProjeto(${i})">Abrir Dashboard</button>
+        </div>`;
+    });
+    document.getElementById('listaProjetos').innerHTML = h || '<p>Nenhum projeto criado.</p>';
+}
 
 function criarProjeto() {
     let n = document.getElementById('p_nome').value;
@@ -116,42 +142,31 @@ function criarProjeto() {
     salvar(); renderHome();
 }
 
-function renderHome() {
-    let h = '';
-    dados.forEach((p, i) => {
-        h += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-            <span><b>${p.nome}</b></span>
-            <button class="blue" onclick="abrirProjeto(${i})">Abrir</button>
-        </div>`;
-    });
-    document.getElementById('listaProjetos').innerHTML = h || '<p>Crie um projeto.</p>';
-}
-
 function abrirProjeto(i) {
     atual = i;
-    document.getElementById('homePage').style.display = 'none';
-    document.getElementById('projetoPage').style.display = 'block';
+    document.getElementById('projectSelector').style.display = 'none';
+    document.getElementById('mainDashboard').style.display = 'block';
     atualizar();
 }
 
-function voltar() { document.getElementById('homePage').style.display = 'block'; document.getElementById('projetoPage').style.display = 'none'; renderHome(); }
-
-function switchTab(n) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab'+n).classList.add('active');
-    document.getElementById('t'+n).classList.add('active');
+function fecharProjeto() {
+    document.getElementById('projectSelector').style.display = 'block';
+    document.getElementById('mainDashboard').style.display = 'none';
+    renderHome();
 }
 
+// --- LÓGICA PRINCIPAL ---
 function atualizar() {
     let p = dados[atual];
     let totalAcumulado = p.historico.reduce((s, v) => s + v, 0);
     
-    // Filtro: Ativas e Quitadas
+    // Regra: Separar Quitadas (Saldo Acumulado * % >= Valor da Conta)
     let ativas = p.contas.filter(c => (totalAcumulado * (c.perc/100)) < (c.valor - 0.01));
     let quitadas = p.contas.filter(c => (totalAcumulado * (c.perc/100)) >= (c.valor - 0.01));
 
-    // Meta Baseada nas Contas Ativas
+    // Ordenar Ativas por Prioridade (%)
+    ativas.sort((a,b) => b.perc - a.perc);
+
     let faltaPagar = ativas.reduce((s, c) => s + (c.valor - (totalAcumulado * (c.perc/100))), 0);
     let metaTotalContas = p.contas.reduce((s, c) => s + c.valor, 0);
     let diasRest = Math.max(1, p.dias - p.historico.length);
@@ -164,7 +179,8 @@ function atualizar() {
     document.getElementById('metaBruta').innerText = `R$ ${brutaSug.toFixed(2)}`;
     document.getElementById('metaDizimo').innerText = `R$ ${(brutaSug * 0.1).toFixed(2)}`;
 
-    renderListas(ativas, quitadas, totalAcumulado, diariaLiq);
+    renderAtivas(ativas, diariaLiq, totalAcumulado);
+    renderQuitadas(quitadas);
     renderEditor(p.contas, totalAcumulado);
     renderHistorico(p.historico);
 }
@@ -174,65 +190,73 @@ function registrarGanho() {
     let bruto = Number(document.getElementById('inputBruto').value);
     if (!bruto) return;
 
-    // Regra: Dízimo não incide sobre gasolina
+    // REGRA: Dízimo NÃO incide sobre os R$ 75 de gasolina
     let dizimo = (bruto - GASOLINA) * 0.1;
+    if (dizimo < 0) dizimo = 0; // Evita dízimo negativo se ganhar menos de 75
     let liquido = (bruto - GASOLINA) - dizimo;
 
-    if (confirm(`ALOCAÇÃO REAL:\n🙏 Dízimo: R$ ${dizimo.toFixed(2)}\n⛽ Gasolina: R$ 75.00\n💰 Líquido Contas: R$ ${liquido.toFixed(2)}`)) {
+    if (confirm(`CONFIRMAÇÃO DE ALOCAÇÃO:\n\n🙏 Dízimo: R$ ${dizimo.toFixed(2)}\n⛽ Gasolina: R$ 75,00\n💰 Líquido p/ Contas: R$ ${liquido.toFixed(2)}`)) {
         p.historico.push(liquido);
         document.getElementById('inputBruto').value = '';
         salvar(); atualizar();
     }
 }
 
-function renderListas(ativas, quitadas, totalAcum, diariaLiq) {
-    // Ordenar ativas por prioridade (%)
-    ativas.sort((a,b) => b.perc - a.perc);
-    
-    let hA = '';
+function renderAtivas(ativas, diariaLiq, totalAcum) {
+    let h = '';
     ativas.forEach(c => {
-        hA += `<div class="row"><span>${c.nome} (${c.perc}%)</span> <b>R$ ${(diariaLiq * (c.perc/100)).toFixed(2)}</b></div>`;
+        h += `<div class="row">
+            <span>${c.nome} (${c.perc}%)</span>
+            <b>R$ ${(diariaLiq * (c.perc/100)).toFixed(2)}</b>
+        </div>`;
     });
-    document.getElementById('divisaoHoje').innerHTML = hA || '<p>Tudo pago!</p>';
+    document.getElementById('divisaoHoje').innerHTML = h || '<p>Nenhuma conta pendente! 🎉</p>';
+}
 
-    let hQ = '';
+function renderQuitadas(quitadas) {
+    let h = '';
     quitadas.forEach(c => {
-        hQ += `<div class="quitada-item">✅ <b>${c.nome}</b> - Quitado com R$ ${c.valor.toFixed(2)}</div>`;
+        h += `<div class="quitada-item">✅ <b>${c.nome}</b> - Quitado com R$ ${c.valor.toFixed(2)}</div>`;
     });
-    document.getElementById('listaQuitadas').innerHTML = hQ;
+    document.getElementById('listaQuitadas').innerHTML = h || '<p style="opacity:0.5">Nenhuma conta quitada ainda.</p>';
 }
 
 function renderEditor(contas, totalAcum) {
     let h = '';
+    let soma = 0;
     contas.forEach((c) => {
         let isQuitada = (totalAcum * (c.perc/100)) >= (c.valor - 0.01);
         if(!isQuitada) {
+            soma += Number(c.perc);
             h += `<div class="item-edit">
-                <input value="${c.nome}" onchange="editConta(${c.id}, 'nome', this.value)" style="width:35%">
+                <input value="${c.nome}" onchange="editConta(${c.id}, 'nome', this.value)" style="width:30%">
                 <input type="number" value="${c.valor}" onchange="editConta(${c.id}, 'valor', this.value)" style="width:25%">
                 <input type="number" value="${c.perc}" onchange="autoRedistribuir(${c.id}, this.value)" style="width:15%"> %
-                <button class="red" onclick="removerConta(${c.id})">🗑</button>
+                <button class="red" onclick="removerConta(${c.id})" style="padding:5px 8px;">🗑</button>
             </div>`;
         }
     });
-    document.getElementById('editorContas').innerHTML = h;
+    document.getElementById('editorContas').innerHTML = h + `<p style="text-align:right; color:${Math.abs(soma-100)>0.1 ? 'var(--red)' : 'var(--green)'}">Soma: ${soma.toFixed(1)}%</p>`;
 }
 
+// REGRA: Redistribuição automática de %
 function autoRedistribuir(id, novoValor) {
     bkpAcao();
     let p = dados[atual];
     let valor = Math.min(100, Math.max(0, Number(novoValor)));
     let resto = 100 - valor;
     
-    let outrasAtivas = p.contas.filter(c => c.id !== id && (p.historico.reduce((s,v)=>s+v,0)*(c.perc/100) < c.valor - 0.01));
+    let totalAcum = p.historico.reduce((s,v)=>s+v,0);
+    let outrasAtivas = p.contas.filter(c => c.id !== id && (totalAcum*(c.perc/100) < c.valor - 0.01));
     
     p.contas.find(c => c.id === id).perc = valor;
     if(outrasAtivas.length > 0) {
-        outrasAtivas.forEach(c => c.perc = Number((resto / outrasAtivas.length).toFixed(2)));
+        outrasAtivas.forEach(c => c.perc = Number((resto / outrasAtivas.length).toFixed(1)));
     }
     salvar(); atualizar();
 }
 
+// REGRA: Bola de Neve (Prioriza menor saldo devedor)
 function bolaDeNeve() {
     bkpAcao();
     let p = dados[atual];
@@ -241,13 +265,15 @@ function bolaDeNeve() {
     
     if (ativas.length === 0) return;
     
-    // Ordenar pelo que falta pagar (Crescente)
+    // Ordena pelo que falta pagar (Crescente)
     ativas.sort((a, b) => (a.valor - (totalAcum * (a.perc/100))) - (b.valor - (totalAcum * (b.perc/100))));
+    
+    p.contas.forEach(c => c.perc = 0); // Reseta
     
     ativas.forEach((c, i) => {
         if (i === 0) c.perc = 70;
         else if (i === 1) c.perc = 20;
-        else c.perc = Number((10 / (ativas.length - 2 || 1)).toFixed(2));
+        else c.perc = Number((10 / (ativas.length - 2 || 1)).toFixed(1));
     });
     salvar(); atualizar();
 }
@@ -263,7 +289,7 @@ function addConta() {
 }
 
 function bkpAcao() { bkpEstrutura = JSON.parse(JSON.stringify(dados[atual].contas)); }
-function desfazer() { if(bkpEstrutura) { dados[atual].contas = bkpEstrutura; salvar(); atualizar(); } }
+function desfazer() { if(bkpEstrutura) { dados[atual].contas = bkpEstrutura; salvar(); atualizar(); alert("Alterações desfeitas!"); } }
 
 function editConta(id, campo, valor) {
     bkpAcao();
@@ -273,23 +299,27 @@ function editConta(id, campo, valor) {
 }
 
 function removerConta(id) {
-    bkpAcao();
-    dados[atual].contas = dados[atual].contas.filter(c => c.id !== id);
-    salvar(); atualizar();
+    if(confirm("Excluir esta conta?")) {
+        bkpAcao();
+        dados[atual].contas = dados[atual].contas.filter(c => c.id !== id);
+        salvar(); atualizar();
+    }
 }
 
 function renderHistorico(hist) {
-    document.getElementById('listaHistorico').innerHTML = hist.slice().reverse().map((v, i) => `
-        <div class="row"><span>Dia ${hist.length - i}: R$ ${v.toFixed(2)}</span>
-        <button class="red" onclick="removerGanho(${hist.length - 1 - i})">🗑</button></div>
-    `).join('');
+    document.getElementById('listaHistorico').innerHTML = hist.slice(-5).reverse().map((v, i) => `
+        <div class="row" style="font-size:0.9em; opacity:0.8;">
+            <span>Ganhos R$ ${v.toFixed(2)}</span>
+            <button class="red" onclick="removerGanho(${hist.length - 1 - i})" style="padding:2px 5px; font-size:10px;">X</button>
+        </div>
+    `).join('') || '<p style="opacity:0.5">Nenhum registro hoje.</p>';
 }
 
 function removerGanho(idx) {
-    if(confirm("Remover este registro?")) { dados[atual].historico.splice(idx, 1); salvar(); atualizar(); }
+    if(confirm("Apagar esse registro?")) { dados[atual].historico.splice(idx, 1); salvar(); atualizar(); }
 }
 
-function excluirProjetoTotal() { if(confirm("Excluir projeto?")) { dados.splice(atual,1); salvar(); voltar(); } }
+function excluirProjetoTotal() { if(confirm("Deseja EXCLUIR TUDO deste projeto?")) { dados.splice(atual, 1); salvar(); fecharProjeto(); } }
 
 renderHome();
 </script>
