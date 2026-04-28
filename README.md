@@ -1,12 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
-# Financeiro
-Metas Financeiras
-  
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX - Quitação Inteligente</title>
+<title>Meta Financeira PRO MAX - Inteligência de Quitação</title>
 <style>
 body { font-family: Arial, sans-serif; background:#0f172a; color:white; padding:20px; line-height: 1.5; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; border: 1px solid #334155; }
@@ -70,7 +66,7 @@ input { padding:8px; margin:3px; border-radius:8px; border:none; background: #33
     
     <div style="margin-bottom:20px; background: #0f172a; padding: 10px; border-radius: 8px;">
         <button class="orange" onclick="priorizarQuitacao()">🚀 Priorizar Quitação (Menores Valores)</button>
-        <p style="margin: 5px 0 0 0;"><small>Isso focará 70% do seu ganho nas contas mais fáceis de quitar hoje.</small></p>
+        <p style="margin: 5px 0 0 0;"><small>Foca 70% do ganho nas contas mais próximas de serem quitadas.</small></p>
     </div>
 
     <div style="margin-bottom:20px;">
@@ -219,30 +215,24 @@ function atualizarPorcentagemManual(i, val){
 function priorizarQuitacao(){
     let m = metas[metaAtual];
     let ganhoTotal = totalGanho(m);
-    
     if(m.despesas.length === 0) return;
 
-    // 1. Calcular quanto falta para cada uma
     m.despesas.forEach(d => {
         d.faltaReal = d.valor - (ganhoTotal * d.porcentagem);
-        d.manual = false; // Resetamos o manual para priorizar o algoritmo
+        d.manual = false;
     });
 
-    // 2. Ordenar por quem falta menos (mais fácil de pagar)
     let ordenadas = [...m.despesas].sort((a, b) => a.faltaReal - b.faltaReal);
 
-    // 3. Distribuição agressiva (Snowball Method)
-    // A primeira (mais fácil) ganha 60%, a segunda 25%, a terceira 10%, o resto divide 5%
     ordenadas.forEach((d, index) => {
         let originalIdx = m.despesas.indexOf(d);
         if(index === 0) m.despesas[originalIdx].porcentagem = 0.60;
         else if(index === 1) m.despesas[originalIdx].porcentagem = 0.25;
         else if(index === 2) m.despesas[originalIdx].porcentagem = 0.10;
-        else m.despesas[originalIdx].porcentagem = 0.05 / (ordenadas.length - 3);
+        else m.despesas[originalIdx].porcentagem = 0.05 / (ordenadas.length - 3 || 1);
     });
 
-    salvar();
-    atualizar();
+    salvar(); atualizar();
 }
 
 function removerDespesa(i){ 
@@ -253,7 +243,6 @@ function removerDespesa(i){
 function renderDespesas(diaria, ganhoTotal){
   let m = metas[metaAtual];
   let html='';
-
   m.despesas.forEach((d, i)=>{
     let alocado = ganhoTotal * d.porcentagem;
     let hoje = diaria * d.porcentagem;
@@ -272,7 +261,7 @@ function renderDespesas(diaria, ganhoTotal){
         ${faltaParaQuitar <= 0 ? '✅ QUITADA!' : '❗ Falta: R$ ' + faltaParaQuitar.toFixed(2)}
       </small>
       <br>
-      <small>🎯 Separar do ganho de hoje: <b>R$ ${hoje.toFixed(2)}</b></small>
+      <small>🎯 Separar hoje: <b>R$ ${hoje.toFixed(2)}</b></small>
       <button class='red' style="float:right" onclick='removerDespesa(${i})'>X</button>
     </div>`;
   });
