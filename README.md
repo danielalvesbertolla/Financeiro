@@ -4,102 +4,55 @@ Metas Financeiras
 <Vai Dar Bom><html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Meta Financeira PRO MAX FINAL</title>
+<title>Meta Financeira PRO MAX ULTRA</title>
 <style>
 body { font-family: Arial; background:#0f172a; color:white; padding:20px; }
 .card { background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px; }
-button { padding:8px 12px; border:none; border-radius:8px; cursor:pointer; margin:5px; }
-input { padding:8px; margin:5px; border-radius:8px; border:none; }
+button { padding:6px 10px; border:none; border-radius:8px; cursor:pointer; margin:3px; }
+input { padding:6px; margin:3px; border-radius:8px; border:none; }
 .green { background:#22c55e; }
 .red { background:#ef4444; }
 .blue { background:#3b82f6; }
 .alert { margin-top:10px; font-weight:bold; }
 </style>
 </head>
-<body>
-
-<h1>📊 Metas Financeiras PRO MAX FINAL</h1>
-
-<div id="home" class="card">
+<body><h1>📊 Metas Financeiras PRO MAX ULTRA</h1><div id="home" class="card">
   <h3>Suas Metas</h3>
-  <div id="listaMetas"></div>
-
-  <h4>Criar Nova Meta</h4>
+  <div id="listaMetas"></div>  <h4>Criar Nova Meta</h4>
   Nome: <input id="nomeMeta">
   Valor: <input id="valorMeta" type="number">
   Dias: <input id="diasMeta" type="number">
   <button class="green" onclick="criarMeta()">Criar</button>
-</div>
-
-<div id="metaPage" style="display:none;">
+</div><div id="metaPage" style="display:none;">
   <div class="card">
     <button onclick="voltar()">⬅ Voltar</button>
-    <button class="red" onclick="resetarMeta()">Resetar</button>
-    <button class="red" onclick="excluirMeta()">Excluir</button>
-    <button class="blue" onclick="desfazer()">↩ Desfazer</button>
+    <button class="blue" onclick="desfazer()">↩ Desfazer</button><h2 id="tituloMeta"></h2>
 
-    <h2 id="tituloMeta"></h2>
+<p id="diaria"></p>
+<p id="proximoDia"></p>
+<p id="dizimoInfo"></p>
 
-    <h3>✏️ Editar Meta</h3>
-    Valor: <input id="editarValor" type="number">
-    Dias: <input id="editarDias" type="number">
-    <button class="blue" onclick="salvarEdicaoMeta()">Salvar</button>
+<input id="ganhoInput" type="number">
+<button class="green" onclick="registrar()">Registrar ganho</button>
 
-    <p id="diaAtual"></p>
-    <p id="diasRestantes"></p>
-    <p id="valorDevia"></p>
-    <p id="valorAtual"></p>
-    <p id="restante"></p>
-    <p id="diaria"></p>
-    <p id="proximoDia"></p>
-    <p id="dizimoInfo"></p>
-    <p id="percentual"></p>
+<p class="alert" id="alerta"></p>
 
-    <input id="ganhoInput" type="number">
-    <button class="green" onclick="registrar()">Registrar ganho</button>
-
-    <p class="alert" id="alerta"></p>
-  </div>
-
-  <div class="card">
-    <h3>Distribuição do dia</h3>
-    <div id="distribuicaoDia"></div>
-  </div>
-
-  <div class="card">
-    <h3>Contas</h3>
-
-    <!-- 🔥 AQUI FOI AJUSTADO -->
-    <div style="margin-bottom: 30px;">
-      Nome: <input id="nomeDespesa">
-      Valor: <input id="valorDespesa" type="number">
-      <button class="blue" onclick="addDespesa()">Adicionar</button>
-    </div>
-
-    <div id="listaDespesas"></div>
-  </div>
-
-  <div class="card">
-    <h3>Histórico</h3>
-    <div id="historico"></div>
-  </div>
+  </div>  <div class="card">
+    <h3>Contas (Prioridade + % customizável)</h3><div style="margin-bottom:20px;">
+  Nome: <input id="nomeDespesa">
+  Valor: <input id="valorDespesa" type="number">
+  <button class="blue" onclick="addDespesa()">Adicionar</button>
 </div>
 
-<script>
+<div id="listaDespesas"></div>
+
+  </div>
+</div><script>
 let metas = JSON.parse(localStorage.getItem('metas')) || [];
 let metaAtual = null;
 let historicoBackup = [];
 
 function salvar(){ localStorage.setItem('metas', JSON.stringify(metas)); }
-
-function renderMetas(){
-  let html='';
-  metas.forEach((m,i)=>{
-    html += `<div>${m.nome} - R$ ${m.meta}
-    <button class='blue' onclick='abrirMeta(${i})'>Abrir</button></div>`;
-  });
-  listaMetas.innerHTML = html;
-}
 
 function criarMeta(){
   metas.push({
@@ -107,30 +60,25 @@ function criarMeta(){
     meta:Number(valorMeta.value),
     diasTotal:Number(diasMeta.value),
     historico:[],
-    despesas:[{nome:'Aluguel',valor:1400},{nome:'Internet',valor:100},{nome:'Cartão',valor:2500}]
+    despesas:[]
   });
   salvar(); renderMetas();
+}
+
+function renderMetas(){
+  let html='';
+  metas.forEach((m,i)=>{
+    html+=`<div>${m.nome}
+    <button onclick='abrirMeta(${i})'>Abrir</button></div>`;
+  });
+  listaMetas.innerHTML=html;
 }
 
 function abrirMeta(i){
   metaAtual=i;
   home.style.display='none';
   metaPage.style.display='block';
-  carregarEdicao();
   atualizar();
-}
-
-function carregarEdicao(){
-  let m = metas[metaAtual];
-  editarValor.value = m.meta;
-  editarDias.value = m.diasTotal;
-}
-
-function salvarEdicaoMeta(){
-  let m = metas[metaAtual];
-  m.meta = Number(editarValor.value);
-  m.diasTotal = Number(editarDias.value);
-  salvar(); atualizar();
 }
 
 function voltar(){ home.style.display='block'; metaPage.style.display='none'; renderMetas(); }
@@ -143,110 +91,96 @@ function atualizar(){
   let dia = m.historico.length;
   let restante = m.meta - ganho;
   let diasRest = m.diasTotal - dia;
+
   let diariaLiquida = restante / (diasRest || 1);
   let diariaBruta = diariaLiquida / 0.9;
-  let progresso = (ganho/m.meta)*100;
-  let deveria = (m.meta/m.diasTotal)*dia;
 
-  tituloMeta.innerText = m.nome;
-  diaAtual.innerText = `📅 Dia ${dia} de ${m.diasTotal}`;
-  diasRestantes.innerText = `⏳ Dias restantes: ${diasRest}`;
-  valorDevia.innerText = `📌 Deveria ter: R$ ${deveria.toFixed(2)}`;
-  valorAtual.innerText = `💰 Você tem: R$ ${ganho.toFixed(2)}`;
-  restante.innerText = `❗ Falta: R$ ${restante.toFixed(2)}`;
-  diaria.innerText = `Meta diária (líquido): R$ ${diariaLiquida.toFixed(2)}`;
-  proximoDia.innerText = `👉 Próximo dia você precisa fazer: R$ ${diariaBruta.toFixed(2)}`;
-  dizimoInfo.innerText = `🙏 Dízimo do dia: R$ ${(diariaBruta*0.1).toFixed(2)}`;
-  percentual.innerText = `Progresso: ${progresso.toFixed(1)}%`;
+  diaria.innerText = `Meta líquida: R$ ${diariaLiquida.toFixed(2)}`;
+  proximoDia.innerText = `👉 Fazer amanhã: R$ ${diariaBruta.toFixed(2)}`;
+  dizimoInfo.innerText = `🙏 Dízimo: R$ ${(diariaBruta*0.1).toFixed(2)}`;
 
-  alerta.innerText = ganho < deveria ? '⚠️ Abaixo do esperado' : '🔥 No ritmo';
-
-  renderHistorico();
-  renderDespesas();
-  renderDistribuicaoDia(diariaLiquida);
+  renderDespesas(diariaLiquida, ganho);
 }
 
 function registrar(){
   let m = metas[metaAtual];
   historicoBackup = [...m.historico];
-  let liquido = Number(ganhoInput.value)*0.9;
-  m.historico.push(liquido);
-  salvar(); atualizar();
-}
-
-function editarDia(i,val){
-  let m = metas[metaAtual];
-  historicoBackup = [...m.historico];
-  m.historico[i] = val*0.9;
-  salvar(); atualizar();
-}
-
-function apagarDia(i){
-  let m = metas[metaAtual];
-  historicoBackup = [...m.historico];
-  m.historico.splice(i,1);
+  m.historico.push(Number(ganhoInput.value)*0.9);
   salvar(); atualizar();
 }
 
 function desfazer(){ metas[metaAtual].historico=[...historicoBackup]; salvar(); atualizar(); }
 
-function renderHistorico(){
-  let m = metas[metaAtual];
-  let html='';
-  m.historico.forEach((v,i)=>{
-    html+=`Dia ${i+1}: 
-    <input type='number' value='${v.toFixed(2)}' onchange='editarDia(${i},this.value)'>
-    <button class='red' onclick='apagarDia(${i})'>🗑</button><br>`;
-  });
-  historico.innerHTML=html;
-}
-
 function addDespesa(){
-  metas[metaAtual].despesas.push({nome:nomeDespesa.value, valor:Number(valorDespesa.value)});
-  salvar(); renderDespesas();
+  metas[metaAtual].despesas.push({
+    nome:nomeDespesa.value,
+    valor:Number(valorDespesa.value),
+    prioridade: metas[metaAtual].despesas.length,
+    porcentagem:null
+  });
+  salvar(); atualizar();
 }
 
-function removerDespesa(i){ metas[metaAtual].despesas.splice(i,1); salvar(); renderDespesas(); }
+function mover(i,dir){
+  let arr = metas[metaAtual].despesas;
+  let novo = i+dir;
+  if(novo<0||novo>=arr.length) return;
+  [arr[i],arr[novo]]=[arr[novo],arr[i]];
+  salvar(); atualizar();
+}
 
-function renderDespesas(){
+function atualizarPorcentagem(i,val){
   let m = metas[metaAtual];
-  let total = m.despesas.reduce((s,d)=>s+d.valor,0);
-  let ganho = totalGanho(m);
+  m.despesas[i].porcentagem = Number(val)/100;
+
+  let restante = 1 - m.despesas.reduce((s,d)=>s+(d.porcentagem||0),0);
+  let semDef = m.despesas.filter(d=>!d.porcentagem);
+
+  semDef.forEach(d=> d.porcentagem = restante/semDef.length);
+
+  salvar(); atualizar();
+}
+
+function removerDespesa(i){ metas[metaAtual].despesas.splice(i,1); salvar(); atualizar(); }
+
+function renderDespesas(diaria, ganho){
+  let m = metas[metaAtual];
+
+  // ordena por prioridade (posição)
+  let despesas = m.despesas;
+
+  let total = despesas.reduce((s,d)=>s+d.valor,0);
 
   let html='';
-  m.despesas.forEach((d,i)=>{
-    let perc = d.valor/total;
-    let alocado = ganho*perc;
-    let falta = d.valor - alocado;
 
-    html+=`${d.nome}: R$${d.valor} (${(perc*100).toFixed(1)}%)<br>
-    👉 Alocado: R$${alocado.toFixed(2)}<br>
-    ❗ Falta: R$${falta.toFixed(2)}
-    <button onclick='removerDespesa(${i})'>X</button><br><br>`;
+  despesas.forEach((d,i)=>{
+    let perc = d.porcentagem ?? (d.valor/total);
+
+    let alocado = ganho * perc;
+    let hoje = diaria * perc;
+
+    html+=`
+    <div style='margin-bottom:15px;'>
+      <b>${d.nome}</b> ( ${(perc*100).toFixed(1)}% )
+      <br>
+      👉 Hoje: R$ ${hoje.toFixed(2)}
+      <br>
+      💰 Alocado: R$ ${alocado.toFixed(2)}
+      <br>
+
+      %: <input type='number' value='${(perc*100).toFixed(1)}' onchange='atualizarPorcentagem(${i},this.value)'>
+
+      <br>
+      <button onclick='mover(${i},-1)'>⬆</button>
+      <button onclick='mover(${i},1)'>⬇</button>
+      <button class='red' onclick='removerDespesa(${i})'>X</button>
+    </div>
+    `;
   });
 
   listaDespesas.innerHTML=html;
 }
 
-function renderDistribuicaoDia(diaria){
-  let m = metas[metaAtual];
-  let total = m.despesas.reduce((s,d)=>s+d.valor,0);
-
-  let html='';
-  m.despesas.forEach(d=>{
-    let perc = d.valor/total;
-    let hoje = diaria * perc;
-    html+=`${d.nome}: 👉 Hoje separar R$ ${hoje.toFixed(2)}<br>`;
-  });
-
-  distribuicaoDia.innerHTML = html;
-}
-
-function resetarMeta(){ metas[metaAtual].historico=[]; salvar(); atualizar(); }
-function excluirMeta(){ metas.splice(metaAtual,1); salvar(); voltar(); }
-
 renderMetas();
-</script>
-
-</body>
+</script></body>
 </html>
