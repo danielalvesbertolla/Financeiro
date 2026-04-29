@@ -276,6 +276,7 @@ function mudarPercentualManual(idx, v) { snapshot(); metas[metaAtual].despesas[i
 function toggleModo(idx) { snapshot(); metas[metaAtual].despesas[idx].manual = !metas[metaAtual].despesas[idx].manual; recalcularProporcoes(); }
 function quitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada = true; metas[metaAtual].despesas[idx].percentual = 0; recalcularProporcoes(); }
 function removerConta(idx) { snapshot(); metas[metaAtual].despesas.splice(idx, 1); recalcularProporcoes(); }
+function desquitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada = false; recalcularProporcoes(); } // NOVA FUNÇÃO AQUI
 
 function renderizarContas(totalLiq) {
     const m = metas[metaAtual];
@@ -286,7 +287,8 @@ function renderizarContas(totalLiq) {
             <div class="flex"><b>${d.nome}</b><span class="badge">${(d.percentual*100).toFixed(0)}%</span></div>
             <div class="flex"><small>Meta: R$ ${d.totalMeta.toFixed(2)}</small><b style="color:var(--green)">R$ ${saldo.toFixed(2)}</b></div>
             ${!d.quitada ? `<input type="range" min="0" max="100" value="${(d.percentual*100).toFixed(0)}" onchange="mudarPercentualManual(${i}, this.value)">
-            <div class="flex"><button class="gray" onclick="toggleModo(${i})">⚙️</button><button class="gray" onclick="editarValorDespesa(${i})">✏️</button><button class="green" onclick="quitarConta(${i})">✔️</button><button class="red" onclick="removerConta(${i})">🗑️</button></div>` : ''}</div>`;
+            <div class="flex"><button class="gray" onclick="toggleModo(${i})">⚙️</button><button class="gray" onclick="editarValorDespesa(${i})">✏️</button><button class="green" onclick="quitarConta(${i})">✔️</button><button class="red" onclick="removerConta(${i})">🗑️</button></div>` : 
+            `<div class="flex" style="margin-top: 10px;"><button class="orange" style="flex:1" onclick="desquitarConta(${i})">↩️ Voltar</button><button class="red" onclick="removerConta(${i})">🗑️</button></div>`}</div>`;
         if (d.quitada) hQ += item; else hA += item;
     });
     document.getElementById('listaDespesasAtivas').innerHTML = hA || 'Sem contas.';
