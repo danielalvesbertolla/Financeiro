@@ -39,7 +39,8 @@
     .nav-item.active { color: var(--blue); }
 
     .historico-lista { max-height: 200px; overflow-y: auto; font-size: 13px; }
-    .historico-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #334155; }
+    .historico-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #334155; }
+    .btn-mini { padding: 4px 8px; font-size: 10px; margin-left: 10px; }
 </style>
 
 <div id="configPage" style="display:none;">
@@ -203,7 +204,7 @@ function criarMeta() {
     
     metas.push({
         nome: nome,
-        meta: 0, // Inicia zerado, pois vai somar as despesas depois
+        meta: 0,
         diasTotal: Number(dias) || 30,
         historico: [],
         despesas: []
@@ -261,11 +262,9 @@ function registrarGanho() {
 
 function renderizarMetaDetalhe() {
     const m = metas[metaAtual];
-    
     if (!m.historico) m.historico = [];
     if (!m.despesas) m.despesas = [];
 
-    // O VALOR DA META AGORA É A SOMA DAS DESPESAS
     m.meta = m.despesas.reduce((s, d) => s + (d.totalMeta || 0), 0); 
 
     const totalLíquido = m.historico.reduce((s, v) => s + v, 0);
@@ -286,6 +285,30 @@ function renderizarMetaDetalhe() {
     renderizarContas(totalLíquido);
     renderizarHistoricoMeta();
 }
+
+// --- NOVAS FUNÇÕES PEDIDAS ---
+
+function apagarLancamento(idx) {
+    if(confirm("Deseja excluir este lançamento do histórico?")) {
+        snapshot();
+        metas[metaAtual].historico.splice(idx, 1);
+        gravarDados();
+        renderizarMetaDetalhe();
+    }
+}
+
+function editarValorDespesa(idx) {
+    const d = metas[metaAtual].despesas[idx];
+    const novoValor = prompt(`Editar valor de: ${d.nome}`, d.totalMeta);
+    if (novoValor !== null && !isNaN(novoValor)) {
+        snapshot();
+        d.totalMeta = Number(novoValor);
+        gravarDados();
+        renderizarMetaDetalhe();
+    }
+}
+
+// -----------------------------
 
 function adicionarDespesa() {
     snapshot();
@@ -369,7 +392,7 @@ function renderizarContas(totalLíquido) {
                     </span>
                 </div>
                 <div class="flex" style="margin: 8px 0;">
-                    <small>Meta: R$ ${(d.totalMeta || 0).toFixed(2)}</small>
+                    <small onclick="editarValorDespesa(${i})" style="text-decoration:underline; cursor:pointer">Meta: R$ ${(d.totalMeta || 0).toFixed(2)} ✏️</small>
                     <b style="color:var(--green)">R$ ${saldoConta.toFixed(2)}</b>
                 </div>
                 
@@ -394,11 +417,14 @@ function renderizarContas(totalLíquido) {
 function renderizarHistoricoMeta() {
     const m = metas[metaAtual];
     let html = '';
-    [...m.historico].reverse().forEach((v, i) => {
+    // Criamos uma cópia invertida mas mantemos o index original para apagar certo
+    const historicoInvertido = [...m.historico].map((valor, originalIdx) => ({valor, originalIdx})).reverse();
+    
+    historicoInvertido.forEach((item) => {
         html += `
             <div class="historico-item">
-                <span>Lançamento ${m.historico.length - i}</span>
-                <b>R$ ${v.toFixed(2)}</b>
+                <span>Lançamento: R$ ${item.valor.toFixed(2)}</span>
+                <button class="red btn-mini" onclick="apagarLancamento(${item.originalIdx})">🗑️</button>
             </div>`;
     });
     document.getElementById('historicoGanhos').innerHTML = html || 'Sem histórico.';
@@ -426,6 +452,5 @@ function excluirMetaTotal() {
     }
 }
 
-// Inicia o app
 renderizarHome();
 </script>
