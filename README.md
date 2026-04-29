@@ -115,6 +115,13 @@
         <h3>📜 Histórico Detalhado</h3>
         <div id="historicoGanhos" class="historico-lista"></div>
     </div>
+
+    <div class="card">
+        <h3>📑 Extrato de Contas</h3>
+        <div id="extratoContas" class="historico-lista"></div>
+    </div>
+
+    <button class="red btn-full" onclick="excluirMetaTotal()" style="margin-top: 20px;">🗑️ Excluir Meta Permanente</button>
 </div>
 
 <nav class="nav-bar">
@@ -251,6 +258,7 @@ function renderizarMetaDetalhe() {
     
     renderizarContas(totalLiq);
     renderizarHistoricoMeta();
+    renderizarExtrato(totalLiq); // Chamada da nova função
 }
 
 function adicionarDespesa() {
@@ -276,7 +284,7 @@ function mudarPercentualManual(idx, v) { snapshot(); metas[metaAtual].despesas[i
 function toggleModo(idx) { snapshot(); metas[metaAtual].despesas[idx].manual = !metas[metaAtual].despesas[idx].manual; recalcularProporcoes(); }
 function quitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada = true; metas[metaAtual].despesas[idx].percentual = 0; recalcularProporcoes(); }
 function removerConta(idx) { snapshot(); metas[metaAtual].despesas.splice(idx, 1); recalcularProporcoes(); }
-function desquitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada = false; recalcularProporcoes(); } // NOVA FUNÇÃO AQUI
+function desquitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada = false; recalcularProporcoes(); }
 
 function renderizarContas(totalLiq) {
     const m = metas[metaAtual];
@@ -305,6 +313,32 @@ function renderizarHistoricoMeta() {
             <div style="text-align:right; color:var(--green)"><b>L: R$ ${obj.liquido.toFixed(2)}</b></div></div>`;
     });
     document.getElementById('historicoGanhos').innerHTML = h || 'Vazio.';
+}
+
+// NOVA FUNÇÃO: RENDERIZAR EXTRATO
+function renderizarExtrato(totalLiq) {
+    const m = metas[metaAtual];
+    let h = '';
+    (m.despesas || []).forEach((d) => {
+        const pago = d.quitada ? d.totalMeta : (totalLiq * d.percentual);
+        const falta = Math.max(0, d.totalMeta - pago);
+        const perc = d.totalMeta > 0 ? (pago / d.totalMeta) * 100 : 0;
+        
+        h += `<div class="historico-item" style="border-left: 4px solid ${d.quitada ? 'var(--green)' : 'var(--blue)'};">
+            <div class="flex">
+                <b>${d.nome}</b> 
+                <span style="font-size:10px; color:${d.quitada ? 'var(--green)' : 'var(--orange)'}">
+                    ${d.quitada ? '✅ QUITADA' : '⏳ PENDENTE'}
+                </span>
+            </div>
+            <div style="margin-top:5px; font-size:12px; line-height:1.6;">
+                <div>Dívida Total: R$ ${d.totalMeta.toFixed(2)}</div>
+                <div style="color:var(--green)">Valor Acumulado: R$ ${pago.toFixed(2)} (${Math.min(100, perc).toFixed(1)}%)</div>
+                <div style="color:var(--red)">Falta Pagar: R$ ${falta.toFixed(2)}</div>
+            </div>
+        </div>`;
+    });
+    document.getElementById('extratoContas').innerHTML = h || 'Nenhuma conta para gerar extrato.';
 }
 
 function editarMetaInfo() {
