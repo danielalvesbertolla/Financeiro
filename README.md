@@ -38,9 +38,9 @@
     .nav-item { color: #94a3b8; background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; cursor: pointer; }
     .nav-item.active { color: var(--blue); }
 
-    .historico-lista { max-height: 200px; overflow-y: auto; font-size: 13px; }
-    .historico-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #334155; }
-    .btn-mini { padding: 4px 8px; font-size: 10px; margin-left: 10px; }
+    .historico-lista { max-height: 250px; overflow-y: auto; font-size: 12px; }
+    .historico-item { background: #0f172a; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #334155; }
+    .btn-del-mini { background: var(--red); color: white; padding: 2px 8px; border-radius: 4px; font-size: 10px; }
 </style>
 
 <div id="configPage" style="display:none;">
@@ -64,7 +64,7 @@
     <div class="card">
         <h3>✨ Criar Nova Meta</h3>
         <input id="nomeMeta" placeholder="Nome da Meta (ex: Aluguel)">
-        <input id="valorMeta" type="number" placeholder="Valor (Soma automática depois)" disabled style="opacity: 0.5;">
+        <input id="valorMeta" type="number" placeholder="Valor (Soma automática)" disabled style="opacity: 0.5;">
         <input id="diasMeta" type="number" placeholder="Prazo em Dias">
         <button class="blue btn-full" onclick="criarMeta()">Criar Meta Agora</button>
     </div>
@@ -109,7 +109,7 @@
     </div>
 
     <div class="card">
-        <h3>📋 Alocação de Contas (Soma = Total da Meta)</h3>
+        <h3>📋 Alocação de Contas</h3>
         <div class="flex">
             <input id="nomeDesp" placeholder="Conta" style="width:45%; margin:0;">
             <input id="valorDesp" type="number" placeholder="Valor" style="width:30%; margin:0;">
@@ -122,7 +122,7 @@
     </div>
 
     <div class="card">
-        <h3>📜 Histórico Recente</h3>
+        <h3>📜 Histórico Detalhado</h3>
         <div id="historicoGanhos" class="historico-lista"></div>
     </div>
 
@@ -173,14 +173,9 @@ function navegar(aba) {
     document.getElementById('homePage').style.display = aba === 'home' ? 'block' : 'none';
     document.getElementById('configPage').style.display = aba === 'config' ? 'block' : 'none';
     document.getElementById('metaPage').style.display = aba === 'meta' ? 'block' : 'none';
-    
     document.getElementById('nav-home').classList.toggle('active', aba === 'home');
     document.getElementById('nav-config').classList.toggle('active', aba === 'config');
-    
-    if (aba === 'home') {
-        metaAtual = null;
-        renderizarHome();
-    }
+    if (aba === 'home') { metaAtual = null; renderizarHome(); }
     window.scrollTo(0,0);
 }
 
@@ -199,17 +194,14 @@ function criarMeta() {
     snapshot();
     const nome = document.getElementById('nomeMeta').value;
     const dias = document.getElementById('diasMeta').value;
-    
     if (!nome) return alert("Preencha o Nome da Meta");
-    
     metas.push({
         nome: nome,
         meta: 0,
         diasTotal: Number(dias) || 30,
-        historico: [],
+        historicoObjetos: [], 
         despesas: []
     });
-    
     gravarDados();
     renderizarHome();
     document.getElementById('nomeMeta').value = '';
@@ -219,10 +211,8 @@ function criarMeta() {
 function renderizarHome() {
     let html = '';
     metas.forEach((m, i) => {
-        if (!m.historico) m.historico = [];
-        if (!m.despesas) m.despesas = [];
-        
-        const total = m.historico.reduce((s, v) => s + v, 0);
+        if (!m.historicoObjetos) m.historicoObjetos = [];
+        const total = m.historicoObjetos.reduce((s, o) => s + o.liquido, 0);
         const perc = m.meta > 0 ? ((total / m.meta) * 100).toFixed(0) : 0; 
         html += `
             <div class="card flex" onclick="abrirMeta(${i})" style="cursor:pointer">
@@ -251,24 +241,52 @@ function registrarGanho() {
     const bruto = Number(input.value);
     if (bruto <= 0) return;
 
-    const aposGasolina = Math.max(0, bruto - config.gasolina);
-    const liquidoFinal = aposGasolina * (1 - (config.dizimo / 100));
+    const vGasolina = config.gasolina;
+    const aposGasolina = Math.max(0, bruto - vGasolina);
+    const vDizimo = aposGasolina * (config.dizimo / 100);
+    const liquidoFinal = aposGasolina - vDizimo;
 
-    metas[metaAtual].historico.push(liquidoFinal);
+    metas[metaAtual].historicoObjetos.push({
+        bruto: bruto,
+        gas: vGasolina,
+        diz: vDizimo,
+        liquido: liquidoFinal,
+        data: new Date().toLocaleDateString('pt-BR')
+    });
+
     input.value = '';
     gravarDados();
     renderizarMetaDetalhe();
 }
 
+function apagarLancamento(idx) {
+    if(confirm("Deseja apagar este lançamento?")) {
+        snapshot();
+        metas[metaAtual].historicoObjetos.splice(idx, 1);
+        gravarDados();
+        renderizarMetaDetalhe();
+    }
+}
+
+function editarValorDespesa(idx) {
+    const m = metas[metaAtual];
+    const novoValor = prompt("Digite o novo valor total para " + m.despesas[idx].nome, m.despesas[idx].totalMeta);
+    if (novoValor !== null && !isNaN(novoValor)) {
+        snapshot();
+        m.despesas[idx].totalMeta = Number(novoValor);
+        gravarDados();
+        renderizarMetaDetalhe();
+    }
+}
+
 function renderizarMetaDetalhe() {
     const m = metas[metaAtual];
-    if (!m.historico) m.historico = [];
+    if (!m.historicoObjetos) m.historicoObjetos = [];
     if (!m.despesas) m.despesas = [];
 
     m.meta = m.despesas.reduce((s, d) => s + (d.totalMeta || 0), 0); 
-
-    const totalLíquido = m.historico.reduce((s, v) => s + v, 0);
-    const diasRestantes = Math.max(0, m.diasTotal - m.historico.length);
+    const totalLíquido = m.historicoObjetos.reduce((s, o) => s + o.liquido, 0);
+    const diasRestantes = Math.max(0, m.diasTotal - m.historicoObjetos.length);
     const progresso = m.meta > 0 ? (totalLíquido / m.meta) * 100 : 0;
     const falta = Math.max(0, m.meta - totalLíquido);
     const sugerido = falta / (diasRestantes || 1);
@@ -278,7 +296,6 @@ function renderizarMetaDetalhe() {
     document.getElementById('txtDias').innerText = diasRestantes + ' d';
     document.getElementById('txtAcumulado').innerText = `R$ ${totalLíquido.toFixed(2)}`;
     document.getElementById('txtDiaria').innerText = `R$ ${sugerido.toFixed(2)}`;
-    
     document.getElementById('labelGas').innerText = config.gasolina;
     document.getElementById('labelDiz').innerText = config.dizimo;
 
@@ -286,44 +303,14 @@ function renderizarMetaDetalhe() {
     renderizarHistoricoMeta();
 }
 
-// --- NOVAS FUNÇÕES PEDIDAS ---
-
-function apagarLancamento(idx) {
-    if(confirm("Deseja excluir este lançamento do histórico?")) {
-        snapshot();
-        metas[metaAtual].historico.splice(idx, 1);
-        gravarDados();
-        renderizarMetaDetalhe();
-    }
-}
-
-function editarValorDespesa(idx) {
-    const d = metas[metaAtual].despesas[idx];
-    const novoValor = prompt(`Editar valor de: ${d.nome}`, d.totalMeta);
-    if (novoValor !== null && !isNaN(novoValor)) {
-        snapshot();
-        d.totalMeta = Number(novoValor);
-        gravarDados();
-        renderizarMetaDetalhe();
-    }
-}
-
-// -----------------------------
-
 function adicionarDespesa() {
     snapshot();
     const n = document.getElementById('nomeDesp');
     const v = document.getElementById('valorDesp');
-    if (!n.value || !v.value) return alert("Preencha nome e valor da conta");
-
+    if (!n.value || !v.value) return alert("Preencha nome e valor");
     metas[metaAtual].despesas.push({
-        nome: n.value,
-        totalMeta: Number(v.value) || 0,
-        percentual: 0,
-        manual: false,
-        quitada: false
+        nome: n.value, totalMeta: Number(v.value) || 0, percentual: 0, manual: false, quitada: false
     });
-    
     n.value = ''; v.value = '';
     recalcularProporcoes();
 }
@@ -333,98 +320,66 @@ function recalcularProporcoes() {
     const ativas = m.despesas.filter(d => !d.quitada);
     const manuais = ativas.filter(d => d.manual);
     const autos = ativas.filter(d => !d.manual);
-
     let somaManual = manuais.reduce((s, d) => s + d.percentual, 0);
     let sobra = Math.max(0, 1 - somaManual);
-
-    if (autos.length > 0) {
-        const fatia = sobra / autos.length;
-        autos.forEach(d => d.percentual = fatia);
-    }
-    
+    if (autos.length > 0) { const fatia = sobra / autos.length; autos.forEach(d => d.percentual = fatia); }
     gravarDados();
     renderizarMetaDetalhe();
 }
 
-function mudarPercentualManual(contaIdx, novoValor) {
-    snapshot();
-    const m = metas[metaAtual];
-    m.despesas[contaIdx].percentual = Number(novoValor) / 100;
-    m.despesas[contaIdx].manual = true;
-    recalcularProporcoes();
-}
-
-function toggleModo(contaIdx) {
-    snapshot();
-    const m = metas[metaAtual];
-    m.despesas[contaIdx].manual = !m.despesas[contaIdx].manual;
-    recalcularProporcoes();
-}
-
-function quitarConta(contaIdx) {
-    snapshot();
-    const m = metas[metaAtual];
-    m.despesas[contaIdx].quitada = true;
-    m.despesas[contaIdx].percentual = 0;
-    m.despesas[contaIdx].manual = false;
-    recalcularProporcoes();
-}
-
-function removerConta(contaIdx) {
-    snapshot();
-    metas[metaAtual].despesas.splice(contaIdx, 1);
-    recalcularProporcoes();
-}
+function mudarPercentualManual(idx, v) { snapshot(); metas[metaAtual].despesas[idx].percentual = Number(v) / 100; metas[metaAtual].despesas[idx].manual = true; recalcularProporcoes(); }
+function toggleModo(idx) { snapshot(); metas[metaAtual].despesas[idx].manual = !metas[metaAtual].despesas[idx].manual; recalcularProporcoes(); }
+function quitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada = true; metas[metaAtual].despesas[idx].percentual = 0; recalcularProporcoes(); }
+function removerConta(idx) { snapshot(); metas[metaAtual].despesas.splice(idx, 1); recalcularProporcoes(); }
 
 function renderizarContas(totalLíquido) {
     const m = metas[metaAtual];
-    let htmlAtivas = '';
-    let htmlQuitadas = '';
-
+    let htmlAtivas = '', htmlQuitadas = '';
     m.despesas.forEach((d, i) => {
         const saldoConta = totalLíquido * d.percentual;
         const item = `
             <div class="despesa-item ${d.manual ? 'manual-mode' : ''} ${d.quitada ? 'quitada' : ''}">
                 <div class="flex">
                     <b>${d.nome}</b>
-                    <span class="badge ${d.manual ? 'badge-manual' : 'badge-auto'}">
-                        ${(d.percentual*100).toFixed(0)}% ${d.manual ? 'Manual' : 'Auto'}
-                    </span>
+                    <span class="badge ${d.manual ? 'badge-manual' : 'badge-auto'}">${(d.percentual*100).toFixed(0)}%</span>
                 </div>
                 <div class="flex" style="margin: 8px 0;">
-                    <small onclick="editarValorDespesa(${i})" style="text-decoration:underline; cursor:pointer">Meta: R$ ${(d.totalMeta || 0).toFixed(2)} ✏️</small>
+                    <small>Meta: R$ ${(d.totalMeta || 0).toFixed(2)}</small>
                     <b style="color:var(--green)">R$ ${saldoConta.toFixed(2)}</b>
                 </div>
-                
                 ${!d.quitada ? `
-                    <input type="range" min="0" max="100" value="${(d.percentual*100).toFixed(0)}" 
-                           onchange="mudarPercentualManual(${i}, this.value)">
+                    <input type="range" min="0" max="100" value="${(d.percentual*100).toFixed(0)}" onchange="mudarPercentualManual(${i}, this.value)">
                     <div class="flex">
-                        <button class="gray" onclick="toggleModo(${i})">⚙️ Modo</button>
-                        <button class="green" onclick="quitarConta(${i})">✔️ Quitar</button>
+                        <button class="gray" onclick="toggleModo(${i})" title="Modo">⚙️</button>
+                        <button class="gray" onclick="editarValorDespesa(${i})" title="Editar Valor">✏️</button>
+                        <button class="green" onclick="quitarConta(${i})">✔️</button>
                         <button class="red" onclick="removerConta(${i})">🗑️</button>
                     </div>
-                ` : `<small>CONTA PAGA - Saldo redistribuído</small>`}
-            </div>
-        `;
+                ` : ``}
+            </div>`;
         if (d.quitada) htmlQuitadas += item; else htmlAtivas += item;
     });
-
-    document.getElementById('listaDespesasAtivas').innerHTML = htmlAtivas || '<p><small>Nenhuma conta adicionada.</small></p>';
+    document.getElementById('listaDespesasAtivas').innerHTML = htmlAtivas || '<p><small>Nenhuma conta.</small></p>';
     document.getElementById('listaDespesasQuitadas').innerHTML = htmlQuitadas || '<p>-</p>';
 }
 
 function renderizarHistoricoMeta() {
     const m = metas[metaAtual];
     let html = '';
-    // Criamos uma cópia invertida mas mantemos o index original para apagar certo
-    const historicoInvertido = [...m.historico].map((valor, originalIdx) => ({valor, originalIdx})).reverse();
-    
-    historicoInvertido.forEach((item) => {
+    [...m.historicoObjetos].reverse().forEach((obj, i) => {
+        const realIdx = m.historicoObjetos.length - 1 - i;
         html += `
             <div class="historico-item">
-                <span>Lançamento: R$ ${item.valor.toFixed(2)}</span>
-                <button class="red btn-mini" onclick="apagarLancamento(${item.originalIdx})">🗑️</button>
+                <div class="flex">
+                    <small>${obj.data}</small>
+                    <button class="btn-del-mini" onclick="apagarLancamento(${realIdx})">X</button>
+                </div>
+                <div style="margin-top:5px;">
+                    Bruto: R$ ${obj.bruto.toFixed(2)} | Gas: -${obj.gas.toFixed(2)} | Diz: -${obj.diz.toFixed(2)}
+                </div>
+                <div style="text-align:right; color:var(--green); font-weight:bold;">
+                    Líquido: R$ ${obj.liquido.toFixed(2)}
+                </div>
             </div>`;
     });
     document.getElementById('historicoGanhos').innerHTML = html || 'Sem histórico.';
@@ -433,23 +388,14 @@ function renderizarHistoricoMeta() {
 function editarMetaInfo() {
     snapshot();
     const m = metas[metaAtual];
-    const novoNome = prompt("Novo nome:", m.nome);
-    const novoPrazo = prompt("Novo prazo (dias):", m.diasTotal);
-    
-    if (novoNome) m.nome = novoNome;
-    if (novoPrazo) m.diasTotal = Number(novoPrazo);
-    
-    gravarDados();
-    renderizarMetaDetalhe();
+    const n = prompt("Novo nome:", m.nome);
+    const p = prompt("Novo prazo (dias):", m.diasTotal);
+    if (n) m.nome = n; if (p) m.diasTotal = Number(p);
+    gravarDados(); renderizarMetaDetalhe();
 }
 
 function excluirMetaTotal() {
-    if (confirm("ATENÇÃO: Você vai apagar todos os dados desta meta permanentemente. Confirma?")) {
-        snapshot();
-        metas.splice(metaAtual, 1);
-        gravarDados();
-        navegar('home');
-    }
+    if (confirm("Apagar meta permanentemente?")) { snapshot(); metas.splice(metaAtual, 1); gravarDados(); navegar('home'); }
 }
 
 renderizarHome();
