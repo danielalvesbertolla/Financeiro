@@ -29,8 +29,7 @@
     .quitada { opacity: 0.5; filter: grayscale(0.8); border-left-color: var(--green); text-decoration: line-through; }
     
     .badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
-    .badge-auto { background: var(--blue); }
-    .badge-manual { background: var(--orange); }
+    .badge-previa { font-size: 11px; color: var(--blue); font-weight: bold; margin-left: 5px; }
 
     input[type="range"] { width: 100%; margin: 15px 0; accent-color: var(--blue); }
 
@@ -97,7 +96,7 @@
     <div class="card">
         <h3>💰 Lançar Ganho Bruto</h3>
         <div class="flex">
-            <input id="ganhoInput" type="number" placeholder="R$ 0,00" style="margin:0; flex-grow:1;">
+            <input id="ganhoInput" type="number" placeholder="R$ 0,00" style="margin:0; flex-grow:1;" oninput="renderizarMetaDetalhe()">
             <button class="green" onclick="registrarGanho()">Lançar</button>
         </div>
     </div>
@@ -218,7 +217,6 @@ function registrarGanho() {
     const vDiz = aposGas * (config.dizimo / 100);
     const liq = aposGas - vDiz;
     
-    // NOVIDADE: Mapeia como este aporte foi dividido entre as despesas atuais
     const m = metas[metaAtual];
     const distribuicao = m.despesas.map(d => ({
         nome: d.nome,
@@ -232,7 +230,7 @@ function registrarGanho() {
         diz: vDiz, 
         liquido: liq, 
         data: new Date().toLocaleDateString('pt-BR'),
-        distribuicao: distribuicao // Salva o estado atual da prioridade
+        distribuicao: distribuicao 
     });
     
     input.value = '';
@@ -250,11 +248,11 @@ function editarValorDespesa(idx) {
 }
 
 function renderizarMetaDetalhe() {
+    if (metaAtual === null) return;
     const m = metas[metaAtual];
     m.meta = (m.despesas || []).reduce((s, d) => s + (d.totalMeta || 0), 0); 
     const totalLiq = (m.historicoObjetos || []).reduce((s, o) => s + (o.liquido || 0), 0);
     
-    // VERIFICAÇÃO DE QUITAÇÃO AUTOMÁTICA (Baseada no acumulado real de cada conta no histórico)
     m.despesas.forEach((d) => {
         const acumuladoConta = calcularAcumuladoConta(d.nome);
         if (!d.quitada && acumuladoConta >= d.totalMeta && d.totalMeta > 0) {
@@ -276,9 +274,13 @@ function renderizarMetaDetalhe() {
     document.getElementById('txtAcumulado').innerText = `R$ ${totalLiq.toFixed(2)}`;
     document.getElementById('txtDiaria').innerText = `R$ ${dBruta.toFixed(2)}`;
     
-    renderizarContas(totalLiq);
+    // Captura o valor do input de ganho para a prévia
+    const ganhoBrutoInput = Number(document.getElementById('ganhoInput').value) || 0;
+    const liqPrevia = Math.max(0, (Math.max(0, ganhoBrutoInput - config.gasolina)) * (1 - (config.dizimo / 100)));
+
+    renderizarContas(totalLiq, liqPrevia);
     renderizarHistoricoMeta();
-    renderizarExtratoReal(); // Nova função de extrato
+    renderizarExtratoReal();
 }
 
 function calcularAcumuladoConta(nomeConta) {
@@ -314,13 +316,21 @@ function quitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada =
 function removerConta(idx) { snapshot(); metas[metaAtual].despesas.splice(idx, 1); recalcularProporcoes(); }
 function desquitarConta(idx) { snapshot(); metas[metaAtual].despesas[idx].quitada = false; recalcularProporcoes(); }
 
-function renderizarContas(totalLiq) {
+function renderizarContas(totalLiq, liqPrevia) {
     const m = metas[metaAtual];
     let hA = '', hQ = '';
     m.despesas.forEach((d, i) => {
         const saldo = calcularAcumuladoConta(d.nome);
+        const valorPrevia = liqPrevia * d.percentual;
+        
+        // Texto da prévia que aparece ao lado da porcentagem
+        const textoPrevia = valorPrevia > 0 ? `<span class="badge-previa"> → R$ ${valorPrevia.toFixed(2)}</span>` : '';
+
         const item = `<div class="despesa-item ${d.manual ? 'manual-mode' : ''} ${d.quitada ? 'quitada' : ''}">
-            <div class="flex"><b>${d.nome}</b><span class="badge">${(d.percentual*100).toFixed(0)}%</span></div>
+            <div class="flex">
+                <b>${d.nome}</b>
+                <div><span class="badge">${(d.percentual*100).toFixed(0)}%</span>${textoPrevia}</div>
+            </div>
             <div class="flex"><small>Meta: R$ ${d.totalMeta.toFixed(2)}</small><b style="color:var(--green)">R$ ${saldo.toFixed(2)}</b></div>
             ${!d.quitada ? `<input type="range" min="0" max="100" value="${(d.percentual*100).toFixed(0)}" onchange="mudarPercentualManual(${i}, this.value)">
             <div class="flex"><button class="gray" onclick="toggleModo(${i})">⚙️</button><button class="gray" onclick="editarValorDespesa(${i})">✏️</button><button class="green" onclick="quitarConta(${i})">✔️</button><button class="red" onclick="removerConta(${i})">🗑️</button></div>` : 
@@ -349,8 +359,6 @@ function renderizarExtratoReal() {
     (m.despesas || []).forEach(d => {
         const acumulado = calcularAcumuladoConta(d.nome);
         const falta = Math.max(0, d.totalMeta - acumulado);
-        
-        // Histórico interno de aportes para esta conta
         let htmlAportes = '';
         m.historicoObjetos.forEach(aporte => {
             const dist = (aporte.distribuicao || []).find(x => x.nome === d.nome);
@@ -358,7 +366,6 @@ function renderizarExtratoReal() {
                 htmlAportes += `<div class="mini-extrato-item"><span>${aporte.data}</span> <b>+ R$ ${dist.valor.toFixed(2)}</b></div>`;
             }
         });
-
         h += `<div class="historico-item" style="border-left: 4px solid ${d.quitada ? 'var(--green)' : 'var(--blue)'}">
             <div class="flex"><b>${d.nome}</b> <span>R$ ${acumulado.toFixed(2)} / ${d.totalMeta.toFixed(2)}</span></div>
             <div class="mini-extrato">
