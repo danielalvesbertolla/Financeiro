@@ -91,8 +91,8 @@
         </div>
         <div class="flex">
             <div class="stat-box" style="width: 100%;">
-                <small>Meta Diária (Líquida)</small><br>
-                <b id="txtDiaria">R$ 0,00</b>
+                <small>Meta Diária (Bruta Necessária)</small><br>
+                <b id="txtDiaria" style="color: var(--orange);">R$ 0,00</b>
             </div>
         </div>
     </div>
@@ -288,14 +288,19 @@ function renderizarMetaDetalhe() {
     const totalLíquido = m.historicoObjetos.reduce((s, o) => s + o.liquido, 0);
     const diasRestantes = Math.max(0, m.diasTotal - m.historicoObjetos.length);
     const progresso = m.meta > 0 ? (totalLíquido / m.meta) * 100 : 0;
-    const falta = Math.max(0, m.meta - totalLíquido);
-    const sugerido = falta / (diasRestantes || 1);
+    
+    // CÁLCULO DA META DIÁRIA BRUTA
+    const faltaLiquido = Math.max(0, m.meta - totalLíquido);
+    const diariaLiquida = faltaLiquido / (diasRestantes || 1);
+    
+    // Regra inversa: Bruto = (Líquido / (1 - dízimo%)) + Gasolina
+    const diariaBruta = (diariaLiquida / (1 - (config.dizimo / 100))) + config.gasolina;
 
     document.getElementById('tituloMeta').innerText = m.nome;
     document.getElementById('txtProgresso').innerText = progresso.toFixed(1) + '%';
     document.getElementById('txtDias').innerText = diasRestantes + ' d';
     document.getElementById('txtAcumulado').innerText = `R$ ${totalLíquido.toFixed(2)}`;
-    document.getElementById('txtDiaria').innerText = `R$ ${sugerido.toFixed(2)}`;
+    document.getElementById('txtDiaria').innerText = `R$ ${diariaBruta.toFixed(2)}`;
     document.getElementById('labelGas').innerText = config.gasolina;
     document.getElementById('labelDiz').innerText = config.dizimo;
 
